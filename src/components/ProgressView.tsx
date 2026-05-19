@@ -80,9 +80,14 @@ export const ProgressView: React.FC = () => {
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  const weeklySummary: Record<string, number> = {};
-
   const processDayLogs = (day: Date) => {
+    const dayLogs = logs.filter(log => isSameDay(new Date(log.date), day));
+    return { dayLogs };
+  };
+
+  // Compute weekly summary separately (not as a render side effect)
+  const weeklySummary: Record<string, number> = {};
+  daysInWeek.forEach(day => {
     const dayLogs = logs.filter(log => isSameDay(new Date(log.date), day));
     dayLogs.forEach(log => {
       let sets = 0, cardioMins = 0;
@@ -103,26 +108,25 @@ export const ProgressView: React.FC = () => {
       if (sets > 0) { weeklySummary[part] = (weeklySummary[part] || 0) + sets; }
       if (cardioMins > 0) { weeklySummary['CARDIO (MIN)'] = (weeklySummary['CARDIO (MIN)'] || 0) + cardioMins; }
     });
-    return { dayLogs };
-  };
+  });
 
   return (
     <div className="flex flex-col gap-0">
 
       {/* ── HEADER ── */}
-      <div className="flex items-end justify-between mb-8 pb-6 border-b border-[var(--hairline)]">
-        <div>
+      <div className="flex items-end justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-[var(--hairline)] gap-3">
+        <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--stone)] mb-1" style={condensed}>
-            Week of {format(weekStart, 'MMM dd')} – {format(weekEnd, 'MMM dd, yyyy')}
+            Week of {format(weekStart, 'MMM dd')} – {format(weekEnd, 'MMM dd')}
           </p>
-          <h1 className="text-[52px] font-black uppercase text-[var(--ink)] leading-none" style={{ ...condensed, letterSpacing: '-0.02em' }}>
+          <h1 className="text-[36px] sm:text-[52px] font-black uppercase text-[var(--ink)] leading-none" style={{ ...condensed, letterSpacing: '-0.02em' }}>
             Analytics
           </h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <button
             onClick={() => setCurrentDate(subWeeks(currentDate, 1))}
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-[var(--hairline-2)] text-[var(--stone)] hover:text-[var(--ash)] hover:border-[var(--ash)] transition-colors bg-none cursor-pointer"
+            className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[var(--hairline-2)] text-[var(--stone)] hover:text-[var(--ash)] hover:border-[var(--ash)] transition-colors bg-none cursor-pointer"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6"/>
@@ -130,7 +134,7 @@ export const ProgressView: React.FC = () => {
           </button>
           <button
             onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-[var(--hairline-2)] text-[var(--stone)] hover:text-[var(--ash)] hover:border-[var(--ash)] transition-colors bg-none cursor-pointer"
+            className="w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[var(--hairline-2)] text-[var(--stone)] hover:text-[var(--ash)] hover:border-[var(--ash)] transition-colors bg-none cursor-pointer"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6"/>
@@ -139,8 +143,8 @@ export const ProgressView: React.FC = () => {
         </div>
       </div>
 
-      {/* ── CALENDAR GRID ── */}
-      <div className="border border-[var(--hairline)] rounded-lg overflow-hidden mb-6">
+      {/* ── CALENDAR GRID (desktop) ── */}
+      <div className="hidden sm:block border border-[var(--hairline)] rounded-lg overflow-hidden mb-6">
         <div className="grid grid-cols-7">
           {daysInWeek.map((day, i) => {
             const { dayLogs } = processDayLogs(day);
@@ -200,6 +204,44 @@ export const ProgressView: React.FC = () => {
             );
           })}
         </div>
+      </div>
+
+      {/* ── CALENDAR LIST (mobile) ── */}
+      <div className="sm:hidden border border-[var(--hairline)] rounded-lg overflow-hidden mb-6">
+        {daysInWeek.map((day, i) => {
+          const { dayLogs } = processDayLogs(day);
+          const isToday = isSameDay(day, new Date());
+          return (
+            <div
+              key={i}
+              className={`flex items-start gap-3 px-4 py-3 min-h-[56px] ${isToday ? 'bg-[var(--surface)]' : ''} ${i < 6 ? 'border-b border-[var(--hairline)]' : ''}`}
+            >
+              <div className="shrink-0 w-12 text-center pt-0.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)]" style={condensed}>{format(day, 'EEE')}</p>
+                <p className={`text-[22px] font-black leading-none ${isToday ? 'text-[var(--action)]' : 'text-[var(--ink)]'}`} style={{ ...condensed, letterSpacing: '-0.02em' }}>{format(day, 'd')}</p>
+              </div>
+              <div className="flex-1 flex flex-wrap gap-1.5 items-center">
+                {dayLogs.length > 0 ? dayLogs.map(log => {
+                  let sets = 0, mins = 0;
+                  log.exercises.forEach(ex => {
+                    if (ex.type === 'cardio') { if (ex.completed || (!Object.prototype.hasOwnProperty.call(ex, 'completed') && ex.duration)) mins += ex.duration || 0; }
+                    else { if (ex.trackedSets?.length) sets += ex.trackedSets.filter(s => s.completed).length; else sets += ex.actualSets || 0; }
+                  });
+                  const part = log.bodyPart ? log.bodyPart.toUpperCase() : (mins > 0 && sets === 0 ? 'CARDIO' : 'MIXED');
+                  return (
+                    <button key={log.id} onClick={() => setSelectedWorkout(log)} className="bg-[var(--surface-2)] border border-[var(--hairline-2)] rounded-md px-2.5 py-1.5 cursor-pointer hover:border-[var(--ash)] transition-colors text-left">
+                      <span className="text-[11px] font-bold uppercase text-[var(--ink)]" style={condensed}>{part}</span>
+                      {sets > 0 && <span className="text-[10px] text-[var(--action)] font-semibold ml-1" style={condensed}>{sets}s</span>}
+                      {mins > 0 && <span className="text-[10px] text-[var(--action)] font-semibold ml-1" style={condensed}>{mins}m</span>}
+                    </button>
+                  );
+                }) : (
+                  <span className="text-[10px] font-semibold text-[var(--stone)] uppercase tracking-[0.08em]" style={condensed}>Rest</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* ── WEEKLY OUTPUT TABLE ── */}

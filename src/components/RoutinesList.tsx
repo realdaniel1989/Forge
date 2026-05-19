@@ -59,14 +59,14 @@ export const RoutinesList: React.FC<{
     <div className="flex flex-col gap-0">
 
       {/* ── PAGE HEADER ── */}
-      <div className="flex items-end justify-between mb-8 pb-6 border-b border-[var(--hairline)]">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-[var(--hairline)] gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--stone)] mb-1"
              style={condensed}>
             {routines.length} routine{routines.length !== 1 ? 's' : ''} saved
           </p>
           <h1
-            className="text-[52px] font-black uppercase text-[var(--ink)] leading-none"
+            className="text-[36px] sm:text-[52px] font-black uppercase text-[var(--ink)] leading-none"
             style={{ ...condensed, letterSpacing: '-0.02em' }}
           >
             My Routines
@@ -75,7 +75,7 @@ export const RoutinesList: React.FC<{
         <div className="flex items-center gap-3">
           <button
             onClick={onGenerateAI}
-            className="flex items-center gap-2 px-5 py-[10px] rounded-full bg-[var(--surface)] border border-[var(--hairline-2)] text-[var(--ash)] text-[13px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:border-[var(--ash)] transition-colors"
+            className="flex items-center gap-2 px-4 sm:px-5 py-[10px] rounded-full bg-[var(--surface)] border border-[var(--hairline-2)] text-[var(--ash)] text-[13px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:border-[var(--ash)] transition-colors"
             style={condensed}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -85,7 +85,7 @@ export const RoutinesList: React.FC<{
           </button>
           <button
             onClick={onCreateCustom}
-            className="flex items-center gap-2 px-5 py-[10px] rounded-full bg-[var(--ink)] text-[var(--canvas)] border-none text-[13px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:opacity-85 transition-opacity"
+            className="flex items-center gap-2 px-4 sm:px-5 py-[10px] rounded-full bg-[var(--ink)] text-[var(--canvas)] border-none text-[13px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:opacity-85 transition-opacity"
             style={condensed}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -100,7 +100,7 @@ export const RoutinesList: React.FC<{
       {routines.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <h3
-            className="text-[28px] font-black uppercase text-[var(--ink)] mb-3 leading-none"
+            className="text-[22px] sm:text-[28px] font-black uppercase text-[var(--ink)] mb-3 leading-none"
             style={{ ...condensed, letterSpacing: '-0.01em' }}
           >
             No Routines Yet
@@ -138,71 +138,94 @@ export const RoutinesList: React.FC<{
                 key={routine.id}
                 className={`py-6 border-b border-[var(--hairline)] ${isLatest ? 'border-t border-t-[var(--hairline)]' : ''}`}
               >
-                <div className="flex items-start gap-6">
+                {/* Mobile: stacked layout */}
+                <div className="sm:hidden">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        {routine.bodyPart && (
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] px-2.5 py-[3px] rounded-full bg-[var(--pill-bg)] text-[var(--pill-text)]" style={condensed}>{routine.bodyPart}</span>
+                        )}
+                        {routine.isGenerated && (
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] px-2.5 py-[3px] rounded-full bg-[var(--pill-bg)] text-[var(--stone)]" style={condensed}>AI</span>
+                        )}
+                      </div>
+                      <h2 className="text-[22px] font-bold uppercase text-[var(--ink)] leading-tight" style={{ ...condensed, letterSpacing: '-0.01em' }}>{routine.name}</h2>
+                    </div>
+                    <button onClick={e => { e.stopPropagation(); setDeleteTarget(routine.id!); }} className="mt-1 text-[var(--stone)] hover:text-[var(--action)] transition-colors border-none bg-none cursor-pointer p-2">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                  {/* Exercise list */}
+                  {routine.exercises.length > 0 && (
+                    <ul className="flex flex-col gap-0.5 mt-2">
+                      {routine.exercises.slice(0, 4).map((ex, i) => (
+                        <li key={i} className="flex items-baseline gap-2 text-[13px] text-[var(--stone)]">
+                          <span className="text-[var(--hairline-2)] shrink-0" style={condensed}>–</span>
+                          <span className="truncate">
+                            {ex.name}
+                            {ex.type === 'cardio'
+                              ? ex.duration ? <span className="text-[11px] text-[var(--stone)] ml-1" style={condensed}>{ex.duration}m</span> : null
+                              : (ex.sets && ex.reps) ? <span className="text-[11px] text-[var(--stone)] ml-1" style={condensed}>{ex.sets}×{ex.reps}</span> : null
+                            }
+                          </span>
+                        </li>
+                      ))}
+                      {routine.exercises.length > 4 && (
+                        <li className="text-[11px] text-[var(--stone)]" style={condensed}>+{routine.exercises.length - 4} more</li>
+                      )}
+                    </ul>
+                  )}
+                  {/* Stats + Start */}
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <span className="text-[20px] font-bold text-[var(--charcoal)]" style={{ ...condensed, letterSpacing: '-0.02em' }}>{exerciseCount}</span>
+                        <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--stone)] ml-1" style={condensed}>ex</span>
+                      </div>
+                      {totalSets > 0 && (
+                        <div>
+                          <span className="text-[20px] font-bold text-[var(--charcoal)]" style={{ ...condensed, letterSpacing: '-0.02em' }}>{totalSets}</span>
+                          <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--stone)] ml-1" style={condensed}>sets</span>
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => onStartWorkout(routine)} className="px-6 py-[10px] rounded-full bg-[var(--action)] text-white border-none text-[13px] font-semibold uppercase tracking-[0.08em] cursor-pointer hover:bg-[var(--action-hover)] transition-colors" style={condensed}>Start</button>
+                  </div>
+                </div>
+
+                {/* Desktop: side-by-side layout */}
+                <div className="hidden sm:flex items-start gap-6">
 
                   {/* Left: latest indicator */}
-                  <div
-                    className={`w-[3px] self-stretch shrink-0 rounded-full mt-1 ${isLatest ? 'bg-[var(--ink)]' : 'bg-transparent'}`}
-                  />
+                  <div className={`w-[3px] self-stretch shrink-0 rounded-full mt-1 ${isLatest ? 'bg-[var(--ink)]' : 'bg-transparent'}`} />
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-
-                    {/* Tag row */}
                     <div className="flex items-center gap-2 mb-3 flex-wrap">
                       {routine.bodyPart && (
-                        <span
-                          className="text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-[3px] rounded-full bg-[var(--pill-bg)] text-[var(--pill-text)]"
-                          style={condensed}
-                        >
-                          {routine.bodyPart}
-                        </span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-[3px] rounded-full bg-[var(--pill-bg)] text-[var(--pill-text)]" style={condensed}>{routine.bodyPart}</span>
                       )}
                       {routine.isGenerated && (
-                        <span
-                          className="text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-[3px] rounded-full bg-[var(--pill-bg)] text-[var(--stone)]"
-                          style={condensed}
-                        >
-                          AI Generated
-                        </span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-[3px] rounded-full bg-[var(--pill-bg)] text-[var(--stone)]" style={condensed}>AI Generated</span>
                       )}
                       {isLatest && (
-                        <span
-                          className="text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-[3px] rounded-full bg-[var(--pill-bg)] text-[var(--stone)]"
-                          style={condensed}
-                        >
-                          Most Recent
-                        </span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-[3px] rounded-full bg-[var(--pill-bg)] text-[var(--stone)]" style={condensed}>Most Recent</span>
                       )}
                     </div>
-
-                    {/* Routine name */}
-                    <h2
-                      className="text-[28px] font-bold uppercase text-[var(--ink)] leading-none mb-2"
-                      style={{ ...condensed, letterSpacing: '-0.01em' }}
-                    >
-                      {routine.name}
-                    </h2>
-
-                    {/* Exercise list — vertical, one per line */}
+                    <h2 className="text-[28px] font-bold uppercase text-[var(--ink)] leading-none mb-2" style={{ ...condensed, letterSpacing: '-0.01em' }}>{routine.name}</h2>
                     {routine.exercises.length > 0 && (
                       <ul className="flex flex-col gap-0.5 mt-1">
                         {routine.exercises.slice(0, 6).map((ex, i) => (
                           <li key={i} className="flex items-baseline gap-2 text-[13px] text-[var(--stone)]">
                             <span className="text-[var(--hairline-2)] shrink-0" style={condensed}>–</span>
-                            <span>
-                              {ex.name}
-                              {ex.type === 'cardio'
-                                ? ex.duration ? <span className="text-[11px] text-[var(--stone)] ml-1.5" style={condensed}>{ex.duration} min</span> : null
-                                : (ex.sets && ex.reps) ? <span className="text-[11px] text-[var(--stone)] ml-1.5" style={condensed}>{ex.sets}×{ex.reps}</span> : null
-                              }
-                            </span>
+                            <span>{ex.name}{ex.type === 'cardio' ? ex.duration ? <span className="text-[11px] text-[var(--stone)] ml-1.5" style={condensed}>{ex.duration} min</span> : null : (ex.sets && ex.reps) ? <span className="text-[11px] text-[var(--stone)] ml-1.5" style={condensed}>{ex.sets}×{ex.reps}</span> : null}</span>
                           </li>
                         ))}
                         {routine.exercises.length > 6 && (
-                          <li className="text-[11px] text-[var(--stone)] pl-4" style={condensed}>
-                            +{routine.exercises.length - 6} more
-                          </li>
+                          <li className="text-[11px] text-[var(--stone)] pl-4" style={condensed}>+{routine.exercises.length - 6} more</li>
                         )}
                       </ul>
                     )}
@@ -212,54 +235,20 @@ export const RoutinesList: React.FC<{
                   <div className="flex flex-col items-end gap-4 shrink-0">
                     <div className="flex items-start gap-5 text-right">
                       <div>
-                        <div
-                          className="text-[28px] font-bold text-[var(--charcoal)] leading-none"
-                          style={{ ...condensed, letterSpacing: '-0.02em' }}
-                        >
-                          {exerciseCount}
-                        </div>
-                        <div
-                          className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mt-0.5"
-                          style={condensed}
-                        >
-                          Exercises
-                        </div>
+                        <div className="text-[28px] font-bold text-[var(--charcoal)] leading-none" style={{ ...condensed, letterSpacing: '-0.02em' }}>{exerciseCount}</div>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mt-0.5" style={condensed}>Exercises</div>
                       </div>
                       {totalSets > 0 && (
                         <div>
-                          <div
-                            className="text-[28px] font-bold text-[var(--charcoal)] leading-none"
-                            style={{ ...condensed, letterSpacing: '-0.02em' }}
-                          >
-                            {totalSets}
-                          </div>
-                          <div
-                            className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mt-0.5"
-                            style={condensed}
-                          >
-                            Sets
-                          </div>
+                          <div className="text-[28px] font-bold text-[var(--charcoal)] leading-none" style={{ ...condensed, letterSpacing: '-0.02em' }}>{totalSets}</div>
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mt-0.5" style={condensed}>Sets</div>
                         </div>
                       )}
-                      {/* Delete */}
-                      <button
-                        onClick={e => { e.stopPropagation(); setDeleteTarget(routine.id!); }}
-                        className="mt-1 text-[var(--stone)] hover:text-[var(--action)] transition-colors border-none bg-none cursor-pointer p-1"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
-                        </svg>
+                      <button onClick={e => { e.stopPropagation(); setDeleteTarget(routine.id!); }} className="mt-1 text-[var(--stone)] hover:text-[var(--action)] transition-colors border-none bg-none cursor-pointer p-1">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                       </button>
                     </div>
-
-                    {/* Start button — the ONE color */}
-                    <button
-                      onClick={() => onStartWorkout(routine)}
-                      className="px-6 py-[10px] rounded-full bg-[var(--action)] text-white border-none text-[13px] font-semibold uppercase tracking-[0.08em] cursor-pointer hover:bg-[var(--action-hover)] transition-colors"
-                      style={condensed}
-                    >
-                      Start
-                    </button>
+                    <button onClick={() => onStartWorkout(routine)} className="px-6 py-[10px] rounded-full bg-[var(--action)] text-white border-none text-[13px] font-semibold uppercase tracking-[0.08em] cursor-pointer hover:bg-[var(--action-hover)] transition-colors" style={condensed}>Start</button>
                   </div>
 
                 </div>

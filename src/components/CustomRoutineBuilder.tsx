@@ -57,13 +57,13 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
     <div className="flex flex-col gap-0">
 
       {/* ── HEADER ── */}
-      <div className="flex items-end justify-between mb-8 pb-6 border-b border-[var(--hairline)]">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-[var(--hairline)] gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--stone)] mb-1" style={condensed}>
             New Routine
           </p>
           <h1
-            className="text-[52px] font-black uppercase text-[var(--ink)] leading-none"
+            className="text-[36px] sm:text-[52px] font-black uppercase text-[var(--ink)] leading-none"
             style={{ ...condensed, letterSpacing: '-0.02em' }}
           >
             Build Routine

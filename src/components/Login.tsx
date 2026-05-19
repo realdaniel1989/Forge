@@ -14,7 +14,7 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--canvas)] flex items-center justify-center p-6 relative">
+    <div className="min-h-screen bg-[var(--canvas)] flex items-center justify-center p-5 sm:p-6 relative safe-top">
 
       {/* Theme toggle */}
       <button

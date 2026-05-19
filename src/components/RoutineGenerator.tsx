@@ -66,13 +66,13 @@ export const RoutineGenerator: React.FC<{ onRoutineSaved: () => void }> = ({ onR
     <div className="flex flex-col gap-0">
 
       {/* ── HEADER ── */}
-      <div className="flex items-end justify-between mb-8 pb-6 border-b border-[var(--hairline)]">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-[var(--hairline)] gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--stone)] mb-1" style={condensed}>
             {generatedRoutine ? `AI Generator · ${bodyPart}` : 'Powered by Gemini'}
           </p>
           <h1
-            className="text-[52px] font-black uppercase text-[var(--ink)] leading-none"
+            className="text-[36px] sm:text-[52px] font-black uppercase text-[var(--ink)] leading-none"
             style={{ ...condensed, letterSpacing: '-0.02em' }}
           >
             {generatedRoutine ? generatedRoutine.name : 'AI Generator'}
@@ -82,7 +82,7 @@ export const RoutineGenerator: React.FC<{ onRoutineSaved: () => void }> = ({ onR
           <button
             onClick={saveRoutine}
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-[10px] rounded-full bg-[var(--action)] text-white border-none text-[13px] font-semibold uppercase tracking-[0.08em] cursor-pointer hover:bg-[var(--action-hover)] transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-[10px] rounded-full bg-[var(--action)] text-white border-none text-[13px] font-semibold uppercase tracking-[0.08em] cursor-pointer hover:bg-[var(--action-hover)] transition-colors disabled:opacity-50"
             style={condensed}
           >
             {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Bookmark className="w-3 h-3" />}
@@ -97,7 +97,7 @@ export const RoutineGenerator: React.FC<{ onRoutineSaved: () => void }> = ({ onR
           <span className="text-[13px] font-semibold text-[var(--ink)]">Target Muscle Group</span>
           <span className="text-[11px] text-[var(--stone)] uppercase tracking-[0.08em]" style={condensed}>Required</span>
         </div>
-        <div className="p-5 flex gap-3 items-end">
+        <div className="p-4 sm:p-5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
           <div className="flex-1">
             <input
               type="text"
@@ -111,7 +111,7 @@ export const RoutineGenerator: React.FC<{ onRoutineSaved: () => void }> = ({ onR
           <button
             onClick={generate}
             disabled={loading || !bodyPart.trim()}
-            className="flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--ink)] text-[var(--canvas)] border-none text-[13px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:opacity-85 transition-opacity disabled:opacity-40"
+            className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[var(--ink)] text-[var(--canvas)] border-none text-[13px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:opacity-85 transition-opacity disabled:opacity-40"
             style={condensed}
           >
             {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : (

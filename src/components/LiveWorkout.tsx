@@ -286,9 +286,9 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--bg)] -mx-8 -my-10">
+    <div className="flex flex-col min-h-screen bg-[var(--bg)] -mx-4 -my-6 sm:-mx-8 sm:-my-10">
       {/* Header */}
-      <header className="border-b border-[var(--border)] px-6 py-3 bg-[var(--bg)] sticky top-0 z-10 shrink-0">
+      <header className="border-b border-[var(--border)] px-4 sm:px-6 py-3 bg-[var(--bg)] sticky top-0 z-10 shrink-0">
         <div className="flex items-center gap-3 mb-2">
           <span className="w-2 h-2 bg-[var(--red)] rounded-full shrink-0" style={{ animation: 'pulse-red 2s ease-in-out infinite' }} />
           <p className="text-sm font-semibold text-[var(--white)] tracking-tight truncate">{routine.name}</p>
@@ -296,7 +296,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
             {completedSets} / {totalSets} done
           </span>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           {/* Rest timer config */}
           <div className="hidden sm:flex items-center bg-[var(--bg-2)] border border-[var(--border)] rounded-[var(--radius-sm)] px-3 py-1.5 gap-1.5">
             <Timer className="w-3 h-3 text-[var(--muted)]" />
@@ -308,6 +308,18 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
               className="bg-transparent text-[var(--text)] text-[11px] font-mono outline-none w-7 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <span className="font-mono text-[10px] text-[var(--muted)]">sec</span>
+          </div>
+          {/* Mobile rest timer config */}
+          <div className="flex sm:hidden items-center bg-[var(--bg-2)] border border-[var(--border)] rounded-[var(--radius-sm)] px-2 py-1.5 gap-1">
+            <Timer className="w-3 h-3 text-[var(--muted)]" />
+            <input 
+              type="number"
+              min="0"
+              value={configuredRestTime} 
+              onChange={(e) => setConfiguredRestTime(Math.max(0, parseInt(e.target.value) || 0))}
+              className="bg-transparent text-[var(--text)] text-[11px] font-mono outline-none w-7 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <span className="font-mono text-[9px] text-[var(--muted)]">s</span>
           </div>
           {/* Unit toggle */}
           <div className="flex bg-[var(--bg-2)] border border-[var(--border)] rounded-[var(--radius-sm)] overflow-hidden">
@@ -324,14 +336,14 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
               kgs
             </button>
           </div>
-          <button onClick={() => setShowAbortConfirm(true)} className="bg-transparent text-[var(--dim)] border border-[var(--border-2)] rounded-full px-4 py-1.5 font-sans text-[11px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:border-[var(--muted)] hover:text-[var(--text-2)] transition-colors hidden sm:block">Abort</button>
+          <button onClick={() => setShowAbortConfirm(true)} className="bg-transparent text-[var(--dim)] border border-[var(--border-2)] rounded-full px-3 sm:px-4 py-1.5 font-sans text-[11px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:border-[var(--muted)] hover:text-[var(--text-2)] transition-colors">Abort</button>
           <button
             onClick={finishWorkout}
             disabled={saving}
-            className="bg-[var(--red)] text-white border-none rounded-full px-5 py-1.5 font-sans text-[11px] font-bold uppercase tracking-[0.06em] cursor-pointer hover:opacity-88 transition-opacity disabled:opacity-50 flex items-center gap-2"
+            className="bg-[var(--red)] text-white border-none rounded-full px-4 sm:px-5 py-1.5 font-sans text-[11px] font-bold uppercase tracking-[0.06em] cursor-pointer hover:opacity-88 transition-opacity disabled:opacity-50 flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-            Finish Session
+            Finish
           </button>
         </div>
       </header>
@@ -342,7 +354,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
           /* Full-screen rest timer takeover */
           <div className="flex flex-col items-center justify-center py-10 px-8 text-center min-h-full">
             <p className="font-mono text-[10px] text-[var(--muted)] uppercase tracking-[0.15em] mb-4">Resting</p>
-            <p className={`font-mono text-[80px] font-bold leading-none tracking-tight mb-7 ${isLowTime ? 'text-[var(--red)]' : 'text-[var(--white)]'}`}
+            <p className={`font-mono text-[56px] sm:text-[80px] font-bold leading-none tracking-tight mb-7 ${isLowTime ? 'text-[var(--red)]' : 'text-[var(--white)]'}`}
                style={isLowTime ? { animation: 'pulse-red 1s ease-in-out infinite' } : {}}>
               {Math.floor(restTimeRemaining / 60)}:{(restTimeRemaining % 60).toString().padStart(2, '0')}
             </p>
@@ -574,7 +586,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
       </div>
 
       {/* Status footer */}
-      <footer className="h-[38px] border-t border-[var(--border)] bg-[var(--bg)] flex items-center px-6 justify-between shrink-0 sticky bottom-0 z-10">
+      <footer className="h-[46px] sm:h-[38px] border-t border-[var(--border)] bg-[var(--bg)] flex items-center px-4 sm:px-6 justify-between shrink-0 sticky bottom-0 z-10 safe-bottom">
         <div className="flex gap-6 font-mono text-[10px] text-[var(--muted)]">
           <span>Sets <span className="text-[var(--white)] font-bold">{completedSets} / {totalSets}</span></span>
         </div>
