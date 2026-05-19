@@ -1,0 +1,91 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Routine Validation
+    // Field limit set to 20 to allow future schema evolution (e.g. notes, tags, isFavorite)
+    function isValidRoutine(data) {
+      return data.keys().hasAll(['userId', 'name', 'exercises', 'createdAt']) &&
+        data.size() <= 20 &&
+        data.userId == request.auth.uid &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.exercises is list && data.exercises.size() <= 30 &&
+        data.createdAt is number &&
+        (data.get('bodyPart', '') is string) &&
+        (data.get('isGenerated', false) is bool);
+    }
+
+    match /routines/{routineId} {
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      
+      allow create: if isSignedIn() &&
+        isValidId(routineId) &&
+        isValidRoutine(incoming());
+        
+      allow update: if isSignedIn() &&
+        isValidRoutine(incoming()) &&
+        existing().userId == request.auth.uid &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'exercises', 'bodyPart', 'isGenerated']);
+        
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // WorkoutLog Validation
+    // Field limit set to 20 to allow future schema evolution
+    function isValidWorkoutLog(data) {
+      return data.keys().hasAll(['userId', 'name', 'date', 'exercises', 'unit']) &&
+        data.size() <= 20 &&
+        data.userId == request.auth.uid &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.date is number &&
+        data.unit is string && data.unit.matches('^(lbs|kgs)$') &&
+        data.exercises is list && data.exercises.size() <= 50 &&
+        (data.get('routineId', '') == null || data.get('routineId', '') is string) &&
+        (data.get('bodyPart', '') == null || data.get('bodyPart', '') is string);
+    }
+
+    match /workoutLogs/{logId} {
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      
+      allow create: if isSignedIn() &&
+        isValidId(logId) &&
+        isValidWorkoutLog(incoming());
+        
+      allow update: if isSignedIn() &&
+        isValidWorkoutLog(incoming()) &&
+        existing().userId == request.auth.uid &&
+        incoming().userId == existing().userId &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'date', 'exercises', 'routineId', 'bodyPart', 'unit']);
+        
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+  }
+}

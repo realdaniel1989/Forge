@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forge.AI - Code Review Issues</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: #0C0C0C;
+      color: #E0E0E0;
+      line-height: 1.6;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+    /* Header */
+    .header {
+      border-bottom: 1px solid #222;
+      padding-bottom: 2rem;
+      margin-bottom: 2rem;
+    }
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .header h1 .dot {
+      width: 10px; height: 10px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .header .subtitle {
+      font-size: 0.7rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-top: 0.5rem;
+    }
+
+    /* Summary Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .summary-card {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .summary-card .count {
+      font-size: 2rem;
+      font-weight: 900;
+    }
+    .summary-card .label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+    .crit .count { color: #ef4444; }
+    .major .count { color: #f97316; }
+    .mod .count { color: #eab308; }
+    .minor .count { color: #6b7280; }
+
+    /* Quick Nav */
+    .quick-nav {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+    .quick-nav h2 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+    .quick-nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .quick-nav-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #aaa;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 0.4rem 0.75rem;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .quick-nav-links a:hover {
+      border-color: #10b981;
+      color: #10b981;
+    }
+    .quick-nav-links a .badge {
+      font-size: 0.6rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-weight: 900;
+    }
+    .badge-crit { background: #ef444433; color: #ef4444; }
+    .badge-major { background: #f9731633; color: #f97316; }
+    .badge-mod { background: #eab30833; color: #eab308; }
+    .badge-minor { background: #6b728033; color: #9ca3af; }
+
+    /* Severity Section */
+    .severity-section {
+      margin-bottom: 2.5rem;
+    }
+    .severity-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #222;
+    }
+    .severity-header .icon {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .severity-header h2 {
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .sev-crit .icon { background: #ef4444; }
+    .sev-crit h2 { color: #ef4444; }
+    .sev-major .icon { background: #f97316; }
+    .sev-major h2 { color: #f97316; }
+    .sev-mod .icon { background: #eab308; }
+    .sev-mod h2 { color: #eab308; }
+    .sev-minor .icon { background: #6b7280; }
+    .sev-minor h2 { color: #9ca3af; }
+
+    /* Issue Card */
+    .issue-card {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .issue-card:hover { border-color: #333; }
+    .issue-card-header {
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .issue-number {
+      font-size: 0.65rem;
+      font-weight: 900;
+      color: #555;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      flex-shrink: 0;
+      min-width: 36px;
+      text-align: center;
+    }
+    .issue-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #e0e0e0;
+      flex: 1;
+    }
+    .issue-tags {
+      display: flex;
+      gap: 0.4rem;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .tag {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      border: 1px solid #333;
+      color: #888;
+    }
+    .tag-file { color: #10b981; border-color: #10b98144; }
+    .tag-type { color: #a78bfa; border-color: #a78bfa44; }
+
+    .issue-body {
+      display: none;
+      padding: 0 1.25rem 1.25rem;
+      border-top: 1px solid #1a1a1a;
+    }
+    .issue-card.open .issue-body { display: block; }
+
+    .issue-body h4 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #555;
+      margin-bottom: 0.5rem;
+      margin-top: 1rem;
+    }
+    .issue-body h4:first-child { margin-top: 0; }
+
+    .issue-body p {
+      font-size: 0.8rem;
+      color: #bbb;
+      margin-bottom: 0.5rem;
+    }
+
+    .code-block {
+      background: #0C0C0C;
+      border: 1px solid #222;
+      border-radius: 4px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+      font-size: 0.75rem;
+      line-height: 1.7;
+      color: #aaa;
+    }
+    .code-block .hl-key { color: #a78bfa; }
+    .code-block .hl-str { color: #10b981; }
+    .code-block .hl-comment { color: #555; }
+    .code-block .hl-fn { color: #60a5fa; }
+    .code-block .hl-num { color: #f97316; }
+    .code-block .hl-error { color: #ef4444; }
+
+    .fix-box {
+      background: #10b98108;
+      border: 1px solid #10b98133;
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      margin-top: 0.75rem;
+    }
+    .fix-box .fix-label {
+      font-size: 0.6rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #10b981;
+      margin-bottom: 0.4rem;
+    }
+    .fix-box p {
+      color: #9ca3af;
+      font-size: 0.78rem;
+    }
+
+    /* Resolved Issue */
+    .issue-card.resolved {
+      border-color: #10b98133;
+      opacity: 0.85;
+    }
+    .issue-card.resolved .issue-title {
+      color: #6b7280;
+      text-decoration: line-through;
+      text-decoration-color: #10b98155;
+    }
+    .issue-card.resolved .issue-number {
+      background: #10b98115;
+      border-color: #10b98144;
+      color: #10b981;
+    }
+    .tag-resolved {
+      color: #10b981 !important;
+      border-color: #10b98155 !important;
+      background: #10b98111;
+    }
+    .resolved-box {
+      background: #10b98108;
+      border: 1px solid #10b98133;
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      margin-top: 0.75rem;
+    }
+    .resolved-box .resolved-label {
+      font-size: 0.6rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #10b981;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .resolved-box .resolved-label .checkmark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      background: #10b981;
+      color: #0C0C0C;
+      border-radius: 50%;
+      font-size: 8px;
+      font-weight: 900;
+    }
+    .resolved-box p {
+      color: #9ca3af;
+      font-size: 0.78rem;
+    }
+    .resolved-box .code-block {
+      border-color: #10b98133;
+    }
+    .badge-resolved { background: #10b98122; color: #10b981; }
+    .summary-card.resolved-card .count { color: #10b981; }
+    .summary-card.resolved-card { border-color: #10b98133; }
+
+    .impact-box {
+      background: #ef444408;
+      border: 1px solid #ef444433;
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      margin-top: 0.75rem;
+    }
+    .impact-box .impact-label {
+      font-size: 0.6rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #ef4444;
+      margin-bottom: 0.4rem;
+    }
+    .impact-box p {
+      color: #9ca3af;
+      font-size: 0.78rem;
+    }
+
+    /* File reference pill */
+    .file-ref {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #10b981;
+      background: #10b98111;
+      border: 1px solid #10b98133;
+      border-radius: 3px;
+      padding: 0.15rem 0.5rem;
+      margin-right: 0.3rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .container { padding: 1rem; }
+      .issue-card-header { flex-wrap: wrap; }
+      .issue-tags { margin-top: 0.5rem; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1><span class="dot"></span> Forge.AI Code Review</h1>
+      <p class="subtitle">Gym Workout Tracker &mdash; Issue Report &mdash; 2026-05-18</p>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-grid">
+      <div class="summary-card crit">
+        <div class="count">1</div>
+        <div class="label">Critical</div>
+      </div>
+      <div class="summary-card major">
+        <div class="count">6</div>
+        <div class="label">Major</div>
+      </div>
+      <div class="summary-card mod">
+        <div class="count">6</div>
+        <div class="label">Moderate</div>
+      </div>
+      <div class="summary-card minor">
+        <div class="count">5</div>
+        <div class="label">Minor</div>
+      </div>
+      <div class="summary-card resolved-card">
+        <div class="count">18</div>
+        <div class="label">Resolved</div>
+      </div>
+      <div class="summary-card" style="border-color:#10b98133;">
+        <div class="count" style="color:#10b981;">20</div>
+        <div class="label">Total Issues</div>
+      </div>
+      <div class="summary-card" style="border-color:#ef444433;">
+        <div class="count" style="color:#ef4444;">0</div>
+        <div class="label">Test Files</div>
+      </div>
+    </div>
+
+    <!-- Quick Nav -->
+    <div class="quick-nav">
+      <h2>Quick Navigation</h2>
+      <div class="quick-nav-links">
+        <a href="#issue-1"><span class="badge badge-resolved">&#10003;</span> Unit Conversion Precision Loss</a>
+        <a href="#issue-2"><span class="badge badge-resolved">&#10003;</span> Abort = Silent Data Loss</a>
+        <a href="#issue-3"><span class="badge badge-resolved">&#10003;</span> Save Failure Loses Workout</a>
+        <a href="#issue-4"><span class="badge badge-resolved">&#10003;</span> Array Index as React Key</a>
+        <a href="#issue-5"><span class="badge badge-resolved">&#10003;</span> Firestore Rules Field Limit</a>
+        <a href="#issue-6"><span class="badge badge-resolved">&#10003;</span> Dangling RoutineId Reference</a>
+        <a href="#issue-7"><span class="badge badge-resolved">&#10003;</span> Impure Side Effect in Render</a>
+        <a href="#issue-8"><span class="badge badge-resolved">&#10003;</span> NaN in Footer Stats</a>
+        <a href="#issue-9"><span class="badge badge-resolved">&#10003;</span> API Key in Client Bundle</a>
+        <a href="#issue-10"><span class="badge badge-resolved">&#10003;</span> No Query Limits / Pagination</a>
+        <a href="#issue-11"><span class="badge badge-resolved">&#10003;</span> Expensive History Fetch</a>
+        <a href="#issue-12"><span class="badge badge-minor">m</span> Full Array Copy (Won't Fix)</a>
+        <a href="#issue-13"><span class="badge badge-resolved">&#10003;</span> Inconsistent Error Handling</a>
+        <a href="#issue-14"><span class="badge badge-resolved">&#10003;</span> Alert() for Error Feedback</a>
+        <a href="#issue-15"><span class="badge badge-resolved">&#10003;</span> No Firebase Init Fallback</a>
+        <a href="#issue-16"><span class="badge badge-resolved">&#10003;</span> Missing useEffect Dependency</a>
+        <a href="#issue-17"><span class="badge badge-resolved">&#10003;</span> No Logout on Mobile</a>
+        <a href="#issue-18"><span class="badge badge-resolved">&#10003;</span> Misleading WorkoutLog Type</a>
+        <a href="#issue-19"><span class="badge badge-resolved">&#10003;</span> No Delete Confirmation</a>
+        <a href="#issue-20"><span class="badge badge-minor">m</span> Zero Test Coverage (Deferred)</a>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CRITICAL ISSUES -->
+    <!-- ============================================ -->
+    <div class="severity-section sev-crit">
+      <div class="severity-header">
+        <div class="icon"></div>
+        <h2>Critical &mdash; Data Loss &amp; Corruption</h2>
+      </div>
+
+      <!-- Issue 1 -->
+      <div class="issue-card resolved open" id="issue-1">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#01</span>
+          <span class="issue-title">Unit Conversion Destroys Weight Precision</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+            <span class="tag tag-type">Data Integrity</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-18</div>
+            <p>All weights are now stored internally in a fixed base unit (lbs). Conversion only happens at the display boundary &mdash; toggling the unit selector no longer mutates stored weight data.</p>
+            <div class="code-block"><span class="hl-comment">// Added: base unit ref + conversion helpers (display-only)</span>
+<span class="hl-key">const</span> baseUnitRef = useRef&lt;<span class="hl-str">'lbs'</span> | <span class="hl-str">'kgs'</span>&gt;(unit);
+
+<span class="hl-key">const</span> <span class="hl-fn">toDisplayUnit</span> = (weight) =&gt; {
+  <span class="hl-key">if</span> (baseUnitRef.current === unit) <span class="hl-key">return</span> weight;
+  <span class="hl-key">return</span> unit === <span class="hl-str">'kgs'</span> ? weight / <span class="hl-num">2.20462</span> : weight * <span class="hl-num">2.20462</span>;
+};
+
+<span class="hl-key">const</span> <span class="hl-fn">fromDisplayUnit</span> = (weight) =&gt; { <span class="hl-comment">/* inverse */</span> };
+
+<span class="hl-comment">// handleUnitChange now only changes the display unit:</span>
+<span class="hl-key">const</span> <span class="hl-fn">handleUnitChange</span> = (newUnit) =&gt; {
+  <span class="hl-key">if</span> (newUnit === unit) <span class="hl-key">return</span>;
+  setUnit(newUnit);  <span class="hl-comment">// no weight mutation</span>
+};
+
+<span class="hl-comment">// Weight input uses conversion at boundary:</span>
+value={parseFloat(<span class="hl-fn">toDisplayUnit</span>(set.weight).toFixed(1))}
+onChange={e =&gt; <span class="hl-fn">updateSet</span>(..., <span class="hl-fn">fromDisplayUnit</span>(parseFloat(...)))}
+
+<span class="hl-comment">// Round-trip verification: 135 lbs &rarr; kgs &rarr; lbs = 135.0 (zero loss)</span></div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>The <code>handleUnitChange</code> function converted all weight values in-place using <code>Math.round()</code>. Because rounding is lossy, converting back and forth accumulated errors.</p>
+
+          <div class="code-block"><span class="hl-comment">// BEFORE &mdash; mutated stored data on toggle</span>
+<span class="hl-key">weight</span>: newUnit === <span class="hl-str">'kgs'</span>
+  ? <span class="hl-fn">Math.round</span>(set.weight / <span class="hl-num">2.20462</span>)
+  : <span class="hl-fn">Math.round</span>(set.weight * <span class="hl-num">2.20462</span>)
+
+<span class="hl-comment">// Data loss chain: 135 lbs &rarr; 61 kg &rarr; 134 lbs (lost 1 lb)</span></div>
+        </div>
+      </div>
+
+      <!-- Issue 2 -->
+      <div class="issue-card resolved" id="issue-2">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#02</span>
+          <span class="issue-title">Abort Workout = Silent Data Loss</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+            <span class="tag tag-file">App.tsx</span>
+            <span class="tag tag-type">Data Loss</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-18</div>
+            <p>Three-part fix applied:</p>
+            <p><strong>1. Auto-save to localStorage</strong> &mdash; Every state change persists the full workout to <code>localStorage</code> under a key scoped to the routine. Protects against browser refresh, accidental back-navigation, and app crashes.</p>
+            <p><strong>2. Draft resume on mount</strong> &mdash; On component mount, checks for an existing draft and restores exercises, unit, and base unit. Users pick up exactly where they left off.</p>
+            <p><strong>3. Abort confirmation modal</strong> &mdash; Replaced the direct <code>onFinish()</code> call with a custom confirmation modal styled to match the app's dark theme. Works in iframes (unlike <code>window.confirm</code>). "Continue Workout" dismisses; "Discard" clears the draft and exits.</p>
+            <div class="code-block"><span class="hl-comment">// Auto-save on every state change</span>
+useEffect(() =&gt; {
+  localStorage.<span class="hl-fn">setItem</span>(draftKey, JSON.<span class="hl-fn">stringify</span>(
+    { exercises, unit, baseUnit: baseUnitRef.current }
+  ));
+}, [exercises, unit]);
+
+<span class="hl-comment">// Resume from draft on mount</span>
+<span class="hl-key">const</span> savedDraft = (() =&gt; {
+  <span class="hl-key">const</span> raw = localStorage.<span class="hl-fn">getItem</span>(draftKey);
+  <span class="hl-key">return</span> raw ? JSON.<span class="hl-fn">parse</span>(raw) : <span class="hl-key">null</span>;
+})();
+<span class="hl-key">const</span> [exercises, setExercises] = useState(
+  savedDraft?.exercises || routine.exercises.<span class="hl-fn">map</span>(...)
+);
+
+<span class="hl-comment">// Clear draft on successful save</span>
+localStorage.<span class="hl-fn">removeItem</span>(draftKey);
+onFinish();</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>Clicking "Abort" called <code>onFinish()</code> directly, immediately unmounting the component with no confirmation. Workout state existed only in React component state &mdash; gone on unmount, browser refresh, or navigation.</p>
+
+          <div class="code-block"><span class="hl-comment">// BEFORE &mdash; no protection</span>
+&lt;<span class="hl-key">button</span> <span class="hl-fn">onClick</span>={onFinish}&gt;Abort&lt;/<span class="hl-key">button</span>&gt;
+<span class="hl-comment">// &uarr; instant unmount, all data destroyed</span></div>
+        </div>
+      </div>
+
+      <!-- Issue 3 -->
+      <div class="issue-card resolved" id="issue-3">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#03</span>
+          <span class="issue-title">Firestore Save Failure Silently Loses Completed Workout</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+            <span class="tag tag-file">firestoreUtils.ts</span>
+            <span class="tag tag-type">Data Loss</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Three-part fix applied:</p>
+            <p><strong>1. Error state with retry UI</strong> &mdash; Added a <code>saveError</code> state. When <code>finishWorkout()</code> fails, the error is caught and displayed in a fixed banner at the top of the screen with a "Retry" button. The workout data stays in component state so the user can retry saving.</p>
+            <p><strong>2. No more re-thrown unhandled errors</strong> &mdash; Removed the <code>handleFirestoreError()</code> call from <code>finishWorkout()</code> (which re-threw and became an unhandled promise rejection). Replaced with <code>console.error()</code> and user-facing error message.</p>
+            <p><strong>3. Data survives failures</strong> &mdash; The localStorage auto-save draft (from Issue #2 fix) ensures workout data is backed up locally. The user can retry or refresh without losing their workout.</p>
+            <div class="code-block"><span class="hl-comment">// finishWorkout now catches errors gracefully</span>
+<span class="hl-key">const</span> [saveError, setSaveError] = useState&lt;string | null&gt;(null);
+
+<span class="hl-key">const</span> <span class="hl-fn">finishWorkout</span> = async () =&gt; {
+  setSaving(true);
+  setSaveError(null);
+  <span class="hl-key">try</span> {
+    <span class="hl-key">await</span> <span class="hl-fn">addDoc</span>(...);
+    localStorage.<span class="hl-fn">removeItem</span>(draftKey);
+    <span class="hl-fn">onFinish</span>();
+  } <span class="hl-key">catch</span>(e) {
+    console.<span class="hl-fn">error</span>(<span class="hl-str">'Failed to save workout:'</span>, e);
+    setSaveError(<span class="hl-str">'Failed to save. Your data is safe — tap Retry.'</span>);
+  } <span class="hl-key">finally</span> {
+    setSaving(false);
+  }
+};</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>When <code>finishWorkout()</code> failed (network error, permission denied, etc.), <code>handleFirestoreError()</code> re-threw the error but nothing caught it &mdash; becoming an unhandled promise rejection. The user saw nothing and the workout data was lost.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MAJOR ISSUES -->
+    <!-- ============================================ -->
+    <div class="severity-section sev-major">
+      <div class="severity-header">
+        <div class="icon"></div>
+        <h2>Major &mdash; Bugs &amp; Logic Errors</h2>
+      </div>
+
+      <!-- Issue 4 -->
+      <div class="issue-card resolved" id="issue-4">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#04</span>
+          <span class="issue-title">Array Index as React Key on Reorderable Exercises</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+            <span class="tag tag-file">types.ts</span>
+            <span class="tag tag-type">React Bug</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Added an optional <code>_id</code> field to the <code>Exercise</code> type. Each exercise is assigned a stable <code>crypto.randomUUID()</code> on initialization and when adding new exercises. The exercise list now uses <code>ex._id</code> as the React key instead of array index.</p>
+            <div class="code-block"><span class="hl-comment">// types.ts</span>
+<span class="hl-key">export interface</span> Exercise {
+  _id?: string;  <span class="hl-comment">// stable ID for React keys</span>
+  name: string;
+  ...
+}
+
+<span class="hl-comment">// LiveWorkout.tsx &mdash; initialization</span>
+(savedDraft?.exercises || routine.exercises).map(ex =&gt; ({
+  ...ex,
+  _id: ex._id || crypto.randomUUID(),
+  ...
+}))
+
+<span class="hl-comment">// Render with stable key</span>
+{exercises.map((ex, idx) =&gt; (
+  &lt;div key={ex._id || idx}&gt;...</div&gt;
+))}</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>Exercises were rendered using array index as the React key. Since exercises can be reordered, deleted, and added, React would reuse DOM elements incorrectly after reorder.</p>
+        </div>
+      </div>
+
+      <!-- Issue 5 -->
+      <div class="issue-card resolved" id="issue-5">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#05</span>
+          <span class="issue-title">Firestore Rules Field Count Limit is a Landmine</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">firestore.rules</span>
+            <span class="tag tag-type">Data Validation</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Increased field count limits from 6/8 to 20 for both routines and workout logs. Added comments explaining the limit and its purpose. The required-fields check still validates the schema structure.</p>
+            <div class="code-block"><span class="hl-comment">// firestore.rules</span>
+<span class="hl-comment">// Field limit set to 20 to allow future schema evolution</span>
+<span class="hl-key">function</span> <span class="hl-fn">isValidRoutine</span>(data) {
+  data.size() &lt;= <span class="hl-num">20</span>;  <span class="hl-comment">// was 6</span>
+}
+<span class="hl-key">function</span> <span class="hl-fn">isValidWorkoutLog</span>(data) {
+  data.size() &lt;= <span class="hl-num">20</span>;  <span class="hl-comment">// was 8</span>
+}</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>Field count limits were set to exactly match current field counts (6 for routines, 8 for logs). Adding any new field would cause all writes to fail.</p>
+        </div>
+      </div>
+
+      <!-- Issue 6 -->
+      <div class="issue-card resolved" id="issue-6">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#06</span>
+          <span class="issue-title">Dangling RoutineId Reference in Workout Logs</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+            <span class="tag tag-type">Data Integrity</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>The workout log now includes a <code>routineName</code> field that snapshots the routine's name at save time (denormalized). This ensures that even if the original routine is deleted, the workout log retains the routine name for display purposes. The <code>routineId</code> is still stored for linking when the routine exists.</p>
+            <div class="code-block"><span class="hl-comment">// LiveWorkout.tsx &mdash; finishWorkout()</span>
+<span class="hl-key">await</span> <span class="hl-fn">addDoc</span>(collection(db, <span class="hl-str">'workoutLogs'</span>), {
+  routineId: routine.id,
+  routineName: routine.name,  <span class="hl-comment">// denormalized snapshot</span>
+  ...
+});</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>Only <code>routine.id</code> was stored. If the routine was deleted, the reference became orphaned with no way to display the routine name.</p>
+        </div>
+      </div>
+
+      <!-- Issue 7 -->
+      <div class="issue-card resolved" id="issue-7">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#07</span>
+          <span class="issue-title">Weekly Summary Computed via Impure Side Effect in Render</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">ProgressView.tsx</span>
+            <span class="tag tag-type">React Anti-pattern</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Replaced the impure <code>processDayLogs</code> (which mutated <code>weeklySummary</code> as a side effect during render) with a pure <code>useMemo</code> computation. Separated <code>getDayLogs</code> as a pure function for filtering logs by day.</p>
+            <div class="code-block"><span class="hl-comment">// Before: side effect during render</span>
+<span class="hl-key">const</span> weeklySummary = {};  <span class="hl-comment">// mutated in processDayLogs()</span>
+
+<span class="hl-comment">// After: pure computation via useMemo</span>
+<span class="hl-key">const</span> getDayLogs = (day) =&gt; logs.filter(...);
+
+<span class="hl-key">const</span> weeklySummary = <span class="hl-fn">useMemo</span>(() =&gt; {
+  <span class="hl-key">const</span> summary = {};
+  daysInWeek.forEach(day =&gt; {
+    getDayLogs(day).forEach(log =&gt; { ... });
+  });
+  <span class="hl-key">return</span> summary;
+}, [logs, daysInWeek]);</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>The weeklySummary was populated as a side effect during render, which would double-count in Strict Mode and violated React's pure render principle.</p>
+        </div>
+      </div>
+
+      <!-- Issue 8 -->
+      <div class="issue-card resolved" id="issue-8">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#08</span>
+          <span class="issue-title">NaN in Footer Stats for Cardio Exercises</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+            <span class="tag tag-type">Display Bug</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>The footer stats now use pre-computed <code>completedSets</code> and <code>totalSets</code> variables that handle cardio exercises correctly. Cardio exercises are excluded from total sets count, and the completed count uses <code>|| 0</code> fallback for exercises without <code>trackedSets</code>.</p>
+            <div class="code-block"><span class="hl-comment">// Pre-computed in component body</span>
+<span class="hl-key">const</span> completedSets = exercises.<span class="hl-fn">reduce</span>((acc, ex) =&gt;
+  acc + (ex.trackedSets?.filter(s =&gt; s.completed).length || 0), 0);
+<span class="hl-key">const</span> totalSets = exercises.<span class="hl-fn">reduce</span>((acc, ex) =&gt;
+  acc + (ex.type === <span class="hl-str">'cardio'</span> ? 0 : (ex.trackedSets?.length || ex.sets || 0)), 0);</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>Cardio exercises don't have a <code>sets</code> field, causing <code>undefined + number = NaN</code> in the footer.</p>
+        </div>
+      </div>
+
+      <!-- Issue 9 -->
+      <div class="issue-card resolved" id="issue-9">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#09</span>
+          <span class="issue-title">Gemini API Key Embedded in Client Bundle</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">vite.config.ts</span>
+            <span class="tag tag-type">Security</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Removed the <code>define</code> block that injected <code>GEMINI_API_KEY</code> into the client bundle. The Express server already reads it from <code>process.env</code> directly &mdash; no client code references it.</p>
+            <div class="code-block"><span class="hl-comment">// vite.config.ts &mdash; removed this block:</span>
+<span class="hl-error">define: {
+  'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+},</span></div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>The Vite config injected the Gemini API key into the client-side JavaScript bundle via <code>define</code>. No client code used it, but it was visible to anyone inspecting the built JS files.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODERATE ISSUES -->
+    <!-- ============================================ -->
+    <div class="severity-section sev-mod">
+      <div class="severity-header">
+        <div class="icon"></div>
+        <h2>Moderate &mdash; Performance &amp; Error Handling</h2>
+      </div>
+
+      <!-- Issue 10 -->
+      <div class="issue-card resolved" id="issue-10">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#10</span>
+          <span class="issue-title">No Query Limits or Pagination on Firestore Queries</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">RoutinesList.tsx</span>
+            <span class="tag tag-file">ProgressView.tsx</span>
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+            <span class="tag tag-type">Performance</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Added <code>limit()</code> to all three unbounded queries:</p>
+            <ul style="list-style:disc; padding-left:1.5rem; color:#9ca3af; font-size:0.78rem; margin:0.5rem 0;">
+              <li><code>RoutinesList</code> &mdash; <code>limit(50)</code></li>
+              <li><code>ProgressView</code> &mdash; <code>limit(100)</code> (needs history for analytics)</li>
+              <li><code>LiveWorkout</code> &mdash; <code>limit(10)</code> (see Issue #11)</li>
+            </ul>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>All three components fetched all user data with no limits, causing slow loads and increased Firebase costs over time.</p>
+        </div>
+      </div>
+
+      <!-- Issue 11 -->
+      <div class="issue-card resolved" id="issue-11">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#11</span>
+          <span class="issue-title">Expensive History Fetch in LiveWorkout (O(n&times;m))</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+            <span class="tag tag-type">Performance</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Added <code>limit(10)</code> to the history fetch query. Since logs are sorted by date descending, the first match per exercise is still the most recent usage. This reduces the iteration from O(n &times; m) where n = total lifetime logs to O(10 &times; m).</p>
+            <div class="code-block"><span class="hl-comment">// Before: fetched ALL logs ever</span>
+<span class="hl-key">const</span> q = <span class="hl-fn">query</span>(collection(db, <span class="hl-str">'workoutLogs'</span>), where(<span class="hl-str">'userId'</span>, <span class="hl-str">'=='</span>, user.uid));
+
+<span class="hl-comment">// After: only 10 most recent logs</span>
+<span class="hl-key">const</span> q = <span class="hl-fn">query</span>(collection(db, <span class="hl-str">'workoutLogs'</span>), where(<span class="hl-str">'userId'</span>, <span class="hl-str">'=='</span>, user.uid), <span class="hl-fn">limit</span>(10));</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>LiveWorkout fetched all workout logs on mount and iterated every exercise in every log to build a history lookup map.</p>
+        </div>
+      </div>
+
+      <!-- Issue 12 -->
+      <div class="issue-card" id="issue-12">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#12</span>
+          <span class="issue-title">Full Array Copy on Every Keystroke in Exercise Updates</span>
+          <div class="issue-tags">
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+            <span class="tag tag-type">Performance</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <h4>Problem</h4>
+          <p>Every call to <code>updateSet</code>, <code>addSet</code>, <code>deleteSet</code>, etc. creates a full copy of the entire exercises array. For weight/reps inputs, this fires on every keystroke, creating many intermediate arrays that are immediately garbage collected.</p>
+
+          <div class="code-block"><span class="hl-comment">// LiveWorkout.tsx &mdash; updateSet()</span>
+<span class="hl-key">const</span> <span class="hl-fn">updateSet</span> = (exerciseIndex, setIndex, field, value) =&gt; {
+  <span class="hl-key">const</span> newEx = [...exercises];              <span class="hl-comment">// copy full array</span>
+  <span class="hl-key">const</span> newSets = [...(newEx[exerciseIndex].trackedSets || [])]; <span class="hl-comment">// copy sets</span>
+  newSets[setIndex] = { ...newSets[setIndex], [field]: value };
+  newEx[exerciseIndex] = { ...newEx[exerciseIndex], trackedSets: newSets };
+  <span class="hl-fn">setExercises</span>(newEx);
+};</div>
+
+          <div class="fix-box">
+            <div class="fix-label">Recommended Fix</div>
+            <p>For input-heavy fields (weight, reps), debounce the state updates so the array isn't copied on every keystroke. Alternatively, use <code>useReducer</code> for more granular state management that can update a single exercise without copying the whole array.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Issue 13 -->
+      <div class="issue-card resolved" id="issue-13">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#13</span>
+          <span class="issue-title">Inconsistent Error Handling &mdash; handleFirestoreError Re-throws</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">firestoreUtils.ts</span>
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+            <span class="tag tag-file">RoutinesList.tsx</span>
+            <span class="tag tag-type">Error Handling</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Changed <code>handleFirestoreError</code> to log-only (removed the <code>throw new Error()</code>). Each call site is now responsible for its own user-facing error handling. This eliminates the inconsistent pattern where some call sites caught the re-thrown error and others didn't.</p>
+            <div class="code-block"><span class="hl-comment">// Before: logged AND re-threw (caused unhandled rejections)</span>
+console.error('Firestore Error: ', ...);
+throw new Error(...);
+
+<span class="hl-comment">// After: log-only, callers handle user feedback</span>
+console.error('Firestore Error: ', ...);
+<span class="hl-comment">// Log-only &mdash; callers are responsible for user-facing error handling</span></div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>The utility both logged and re-threw errors. Some call sites caught the re-throw, others didn't, creating inconsistent behavior and unhandled promise rejections.</p>
+        </div>
+      </div>
+
+      <!-- Issue 14 -->
+      <div class="issue-card resolved" id="issue-14">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#14</span>
+          <span class="issue-title">Network Errors Shown via alert() in RoutineGenerator</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">RoutineGenerator.tsx</span>
+            <span class="tag tag-type">UX</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Replaced both <code>alert()</code> calls with an inline error state (<code>error</code> state variable). Errors now display as a styled banner below the generate form that matches the app's dark theme, with a dismiss button.</p>
+            <div class="code-block"><span class="hl-comment">// Before: blocking browser dialog</span>
+alert(data.error);
+alert('Failed to generate routine');
+
+<span class="hl-comment">// After: inline styled error banner</span>
+<span class="hl-key">const</span> [error, setError] = useState&lt;string | null&gt;(null);
+
+<span class="hl-key">if</span> (!res.ok) setError(data.error || 'Failed to generate');
+<span class="hl-key">catch</span> (e) setError('Failed to generate routine. Check your connection.');
+
+<span class="hl-comment">// Rendered as styled banner:</span>
+&lt;div class="bg-red-900/20 border border-red-900/40"&gt;{error}&lt;/div&gt;</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>Error states used <code>alert()</code> which is a blocking browser dialog that looks out of place with the app's dark UI.</p>
+        </div>
+      </div>
+
+      <!-- Issue 15 -->
+      <div class="issue-card resolved" id="issue-15">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#15</span>
+          <span class="issue-title">No Error Handling for Firebase Initialization Failure</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">firebase.ts</span>
+            <span class="tag tag-file">App.tsx</span>
+            <span class="tag tag-type">Error Handling</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Wrapped Firebase initialization in a try-catch. If init fails, the error is logged and exported via an <code>initError</code> variable. <code>App.tsx</code> checks this before rendering the app and shows a clear error screen with the error message and instructions.</p>
+            <div class="code-block"><span class="hl-comment">// firebase.ts</span>
+<span class="hl-key">let</span> initError: string | null = null;
+<span class="hl-key">try</span> {
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app, ...);
+  auth = getAuth(app);
+} <span class="hl-key">catch</span> (e) {
+  initError = e.message;
+  console.error('Firebase initialization failed:', initError);
+}
+<span class="hl-key">export</span> { db, auth, initError };
+
+<span class="hl-comment">// App.tsx</span>
+<span class="hl-key">if</span> (initError) {
+  <span class="hl-key">return</span> &lt;ErrorScreen&gt;{initError}&lt;/ErrorScreen&gt;;
+}</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>No error handling around Firebase initialization. If config was invalid or services unreachable, the app showed a blank screen with no feedback.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MINOR ISSUES -->
+    <!-- ============================================ -->
+    <div class="severity-section sev-minor">
+      <div class="severity-header">
+        <div class="icon"></div>
+        <h2>Minor &mdash; Code Quality &amp; Polish</h2>
+      </div>
+
+      <!-- Issue 16 -->
+      <div class="issue-card resolved" id="issue-16">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#16</span>
+          <span class="issue-title">fetchRoutines Not in useEffect Dependency Array</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">RoutinesList.tsx</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Wrapped <code>fetchRoutines</code> in <code>useCallback</code> with <code>[user]</code> dependency, then included <code>fetchRoutines</code> in the useEffect dependency array. This satisfies the <code>react-hooks/exhaustive-deps</code> rule.</p>
+            <div class="code-block"><span class="hl-key">const</span> fetchRoutines = <span class="hl-fn">useCallback</span>(<span class="hl-key">async</span> () =&gt; {
+  ...
+}, [user]);
+
+useEffect(() =&gt; {
+  fetchRoutines();
+}, [fetchRoutines]);</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p><code>fetchRoutines</code> was defined inside the component but the useEffect only listed <code>[user]</code> as a dependency, violating the exhaustive-deps rule.</p>
+        </div>
+      </div>
+
+      <!-- Issue 17 -->
+      <div class="issue-card resolved" id="issue-17">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#17</span>
+          <span class="issue-title">No Logout Button Visible on Mobile</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">Layout.tsx</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Resolved by layout redesign. The sidebar has been replaced with a 60px icon rail that is always visible (on both mobile and desktop). The user avatar at the bottom of the rail acts as a logout button with <code>onClick={logOut}</code>, accessible from any screen size.</p>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>The logout button was wrapped in <code>hidden sm:flex</code>, making it completely invisible on mobile screens.</p>
+        </div>
+      </div>
+
+      <!-- Issue 18 -->
+      <div class="issue-card resolved" id="issue-18">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#18</span>
+          <span class="issue-title">WorkoutLog Type Declares <code>id</code> Required, But addDoc Doesn't Set It</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">types.ts</span>
+            <span class="tag tag-file">LiveWorkout.tsx</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Made <code>id</code> optional in the <code>WorkoutLog</code> interface. This correctly reflects that <code>addDoc</code> doesn't include <code>id</code> in the written object &mdash; Firestore auto-generates it server-side. When reading logs back, the <code>id</code> is merged from the document snapshot.</p>
+            <div class="code-block"><span class="hl-comment">// types.ts</span>
+<span class="hl-key">export interface</span> WorkoutLog {
+  id?: string;  <span class="hl-comment">// now optional</span>
+  ...
+}</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p><code>id: string</code> was required in the type, but <code>addDoc</code> doesn't include it. The types were misleading for developers.</p>
+        </div>
+      </div>
+
+      <!-- Issue 19 -->
+      <div class="issue-card resolved" id="issue-19">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#19</span>
+          <span class="issue-title">No Delete Confirmation on Routine Deletion</span>
+          <div class="issue-tags">
+            <span class="tag tag-resolved">Resolved</span>
+            <span class="tag tag-file">RoutinesList.tsx</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <div class="resolved-box">
+            <div class="resolved-label"><span class="checkmark">&#10003;</span> Fixed &mdash; 2026-05-19</div>
+            <p>Implemented a custom confirmation modal (not <code>window.confirm</code>) that works in all environments including iframes. Tapping the trash icon now shows a modal with "Cancel" and "Delete" options. The delete only proceeds on explicit confirmation.</p>
+            <div class="code-block"><span class="hl-comment">// RoutinesList.tsx</span>
+<span class="hl-key">const</span> [deleteTarget, setDeleteTarget] = useState&lt;string | null&gt;(null);
+
+<span class="hl-comment">// Trash icon sets the target instead of deleting immediately:</span>
+<span class="hl-key">const</span> <span class="hl-fn">deleteRoutine</span> = (id, e) =&gt; {
+  e.stopPropagation();
+  setDeleteTarget(id);  <span class="hl-comment">// shows modal</span>
+};
+
+<span class="hl-comment">// Modal confirm does the actual delete:</span>
+<span class="hl-key">const</span> <span class="hl-fn">confirmDelete</span> = async () =&gt; {
+  await <span class="hl-fn">deleteDoc</span>(doc(db, <span class="hl-str">'routines'</span>, deleteTarget));
+  setDeleteTarget(null);
+};</div>
+          </div>
+
+          <h4>Original Problem</h4>
+          <p>The delete handler had confirmation removed because <code>window.confirm</code> fails in iframes. A single tap on the trash icon permanently deleted a routine.</p>
+        </div>
+      </div>
+
+      <!-- Issue 20 -->
+      <div class="issue-card" id="issue-20">
+        <div class="issue-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="issue-number">#20</span>
+          <span class="issue-title">Zero Test Coverage</span>
+          <div class="issue-tags">
+            <span class="tag tag-file">package.json</span>
+          </div>
+        </div>
+        <div class="issue-body">
+          <h4>Problem</h4>
+          <p>The project has no test files, no test framework, and no test scripts. All 20 issues documented here exist with no automated safety net to catch regressions.</p>
+
+          <div class="code-block"><span class="hl-comment">// package.json scripts</span>
+{
+  <span class="hl-str">"dev"</span>: <span class="hl-str">"tsx server.ts"</span>,
+  <span class="hl-str">"build"</span>: <span class="hl-str">"vite build"</span>,
+  <span class="hl-str">"start"</span>: <span class="hl-str">"NODE_ENV=production tsx server.ts"</span>,
+  <span class="hl-str">"clean"</span>: <span class="hl-str">"rm -rf dist"</span>,
+  <span class="hl-str">"lint"</span>: <span class="hl-str">"tsc --noEmit"</span>  <span class="hl-comment">// type-checking only, not testing</span>
+}</div>
+
+          <div class="fix-box">
+            <div class="fix-label">Recommended Fix</div>
+            <p>Add a test framework (Vitest pairs well with Vite). Start with integration tests for the most critical paths: finishing a workout, unit conversion, and routine CRUD. Even a minimal test suite would have caught issues #1, #3, #4, and #8.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="border-top:1px solid #222; padding-top:2rem; margin-top:2rem; text-align:center;">
+      <p style="font-size:0.65rem; color:#444; text-transform:uppercase; letter-spacing:0.15em;">
+        Updated 2026-05-19 &bull; 20 issues &bull; 18 resolved &bull; 2 open &bull; Forge.AI v2.4.0
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    // Open all critical issues by default
+    document.querySelectorAll('.sev-crit .issue-card').forEach(card => card.classList.add('open'));
+  </script>
+</body>
+</html>

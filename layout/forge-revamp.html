@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forge.AI — Revamped Design</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080808;
+      --bg-1:     #0e0e0e;
+      --bg-2:     #141414;
+      --bg-3:     #1a1a1a;
+      --border:   #1e1e1e;
+      --border-2: #2a2a2a;
+      --muted:    #3a3a3a;
+      --dim:      #555;
+      --text-2:   #999;
+      --text:     #e8e8e8;
+      --white:    #ffffff;
+      --red:      #C0392B;
+      --red-dim:  #1a0808;
+      --red-hi:   #E74C3C;
+      --mono:     'Space Mono', monospace;
+      --sans:     'Syne', sans-serif;
+      --radius:   8px;
+      --radius-sm: 5px;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* ── PAGE NAV ── */
+    .page-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: rgba(8,8,8,0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+      backdrop-filter: blur(8px);
+    }
+    .page-nav .brand {
+      font-size: 12px; font-weight: 700; color: var(--white);
+      letter-spacing: 0.04em; margin-right: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .page-nav .brand-dot { width: 8px; height: 8px; background: var(--red); border-radius: 50%; }
+    .page-nav button {
+      padding: 5px 12px; font-size: 10px; font-weight: 600;
+      font-family: var(--sans);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      border: 1px solid var(--border-2); background: transparent;
+      color: var(--dim); cursor: pointer; border-radius: var(--radius-sm);
+      transition: all 0.12s;
+    }
+    .page-nav button:hover { border-color: var(--muted); color: var(--text-2); }
+    .page-nav button.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+    .page-section { display: none; min-height: 100vh; padding-top: 48px; }
+    .page-section.active { display: block; }
+
+    /* ── SHARED LAYOUT ── */
+    .app-shell {
+      display: flex;
+      min-height: calc(100vh - 48px);
+    }
+
+    /* ── ICON RAIL (replaces wide sidebar) ── */
+    .icon-rail {
+      width: 60px; flex-shrink: 0;
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 16px 0;
+      gap: 4px;
+    }
+    .rail-logo {
+      width: 32px; height: 32px;
+      background: var(--red); border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px; flex-shrink: 0;
+    }
+    .rail-logo svg { width: 16px; height: 16px; color: #fff; stroke: #fff; }
+    .rail-btn {
+      width: 36px; height: 36px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.12s; color: var(--muted);
+    }
+    .rail-btn:hover { background: var(--bg-2); color: var(--text-2); }
+    .rail-btn.active { background: var(--red-dim); color: var(--red); }
+    .rail-btn svg { width: 16px; height: 16px; }
+    .rail-spacer { flex: 1; }
+    .rail-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--bg-3); border: 1px solid var(--border-2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: var(--dim);
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      flex: 1; overflow-y: auto;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+    }
+    .main-header {
+      padding: 20px 28px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: flex-end;
+      flex-shrink: 0;
+    }
+    .main-eyebrow {
+      font-family: var(--mono); font-size: 10px;
+      color: var(--muted); letter-spacing: 0.12em;
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .main-title {
+      font-size: 22px; font-weight: 700;
+      color: var(--white); letter-spacing: -0.02em;
+    }
+    .main-body { flex: 1; padding: 24px 28px; overflow-y: auto; }
+    .main-body-inner { max-width: 720px; }
+
+    /* ── BUTTONS ── */
+    .btn-red {
+      background: var(--red); color: #fff;
+      border: none; border-radius: var(--radius-sm);
+      padding: 8px 16px; font-family: var(--sans);
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      cursor: pointer; transition: opacity 0.12s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-red:hover { opacity: 0.88; }
+    .btn-ghost {
+      background: transparent; color: var(--dim);
+      border: 1px solid var(--border-2); border-radius: var(--radius-sm);
+      padding: 8px 16px; font-family: var(--sans);
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      cursor: pointer; transition: all 0.12s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-ghost:hover { border-color: var(--muted); color: var(--text-2); }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-body { padding: 16px; }
+
+    /* ── TAGS / PILLS ── */
+    .pill {
+      font-family: var(--mono); font-size: 9px;
+      padding: 2px 8px; border-radius: 999px;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      display: inline-block;
+    }
+    .pill-red { background: var(--red-dim); color: var(--red); }
+    .pill-dim { background: var(--bg-2); color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── MONO TEXT ── */
+    .mono { font-family: var(--mono); }
+
+    /* ── FORM ── */
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field-label {
+      font-family: var(--mono); font-size: 9px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .field-input {
+      background: var(--bg-2); border: 1px solid var(--border-2);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      color: var(--white); font-family: var(--sans); font-size: 13px;
+      font-weight: 500; outline: none; width: 100%;
+      transition: border-color 0.12s;
+    }
+    .field-input:focus { border-color: var(--red); }
+    .field-input::placeholder { color: var(--muted); }
+
+    /* ── TABLE ── */
+    .data-table {
+      width: 100%; border-collapse: collapse;
+      font-family: var(--mono); font-size: 11px;
+    }
+    .data-table th {
+      padding: 8px 12px; color: var(--muted);
+      text-align: left; font-weight: 400;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(30,30,30,0.6);
+      color: var(--text-2);
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    /* ── STATUS BADGE ── */
+    .status-done { color: var(--red); font-weight: 700; }
+    .status-pending { color: var(--muted); }
+    .status-skip { color: var(--dim); }
+
+    /* ── SET SQUARES ── */
+    .set-squares { display: flex; gap: 3px; align-items: center; }
+    .set-sq {
+      width: 7px; height: 7px; border-radius: 2px;
+    }
+    .set-sq.done { background: var(--red); }
+    .set-sq.pending { background: var(--bg-3); border: 1px solid var(--border-2); }
+
+    /* ── ANIMATE ── */
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin 1s linear infinite; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+    /* ── CHANGELOG ── */
+    .changelog-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+    .cl-col {
+      padding: 20px 24px;
+    }
+    .cl-col.before { border-right: 1px solid var(--border); }
+    .cl-col-head {
+      font-size: 10px; font-family: var(--mono);
+      text-transform: uppercase; letter-spacing: 0.12em;
+      margin-bottom: 12px; font-weight: 700;
+    }
+    .cl-col.before .cl-col-head { color: var(--muted); }
+    .cl-col.after .cl-col-head { color: var(--red); }
+    .cl-item {
+      font-size: 12px; color: var(--text-2);
+      padding: 6px 0; border-bottom: 1px solid rgba(30,30,30,0.5);
+      line-height: 1.5;
+    }
+    .cl-item:last-child { border-bottom: none; }
+    .cl-item strong { color: var(--text); font-weight: 600; }
+    .cl-section-title {
+      font-size: 13px; font-weight: 700; color: var(--white);
+      padding: 14px 24px 0;
+      letter-spacing: -0.01em;
+    }
+    .cl-divider { height: 1px; background: var(--border); margin: 0; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     PAGE NAVIGATION
+════════════════════════════════════════ -->
+<nav class="page-nav">
+  <div class="brand"><span class="brand-dot"></span>Forge.AI — Revamp</div>
+  <button class="active" onclick="showPage('login',this)">Login</button>
+  <button onclick="showPage('routines',this)">My Routines</button>
+  <button onclick="showPage('routines-empty',this)">Routines Empty</button>
+  <button onclick="showPage('generator',this)">AI Generator</button>
+  <button onclick="showPage('generator-result',this)">Generator Result</button>
+  <button onclick="showPage('custom-builder',this)">Custom Builder</button>
+  <button onclick="showPage('live-workout',this)">Live Workout</button>
+  <button onclick="showPage('live-workout-timer',this)">Workout Timer</button>
+  <button onclick="showPage('analytics',this)">Analytics</button>
+  <button onclick="showPage('analytics-modal',this)">Analytics Modal</button>
+  <button onclick="showPage('add-exercise-modal',this)">Add Exercise</button>
+  <button onclick="showPage('changelog',this)" style="margin-left:auto; border-color: var(--red); color: var(--red);">Changelog ↗</button>
+</nav>
+<script>
+function showPage(id, btn) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.page-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 1 · LOGIN
+════════════════════════════════════════ -->
+<div id="login" class="page-section active">
+  <div style="min-height:calc(100vh - 48px); background:var(--bg); display:flex; align-items:center; justify-content:center; padding:24px;">
+    <div style="width:100%; max-width:380px; display:flex; flex-direction:column; gap:0;">
+
+      <!-- Brand -->
+      <div style="margin-bottom:44px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:30px; height:30px; background:var(--red); border-radius:7px; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+            <i data-lucide="dumbbell" style="width:15px;height:15px;color:#fff;"></i>
+          </div>
+          <span style="font-size:24px; font-weight:800; color:var(--white); letter-spacing:-0.03em;">Forge</span><span style="font-size:24px; font-weight:400; color:var(--muted); letter-spacing:-0.03em;">.AI</span>
+        </div>
+        <p class="mono" style="font-size:10px; color:var(--border-2); letter-spacing:0.14em; text-transform:uppercase;">High-Performance Training · v2.4.0</p>
+      </div>
+
+      <!-- Greeting -->
+      <div style="margin-bottom:28px;">
+        <h1 style="font-size:28px; font-weight:700; color:var(--white); letter-spacing:-0.02em; margin-bottom:6px;">Good morning.</h1>
+        <p style="font-size:13px; color:var(--dim); font-weight:400;">Sign in to continue your program.</p>
+      </div>
+
+      <!-- Fields -->
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+        <div class="field">
+          <span class="field-label">Email</span>
+          <input class="field-input" type="email" placeholder="john.doe@example.com" value="john.doe@example.com" />
+        </div>
+        <div class="field">
+          <span class="field-label">Password</span>
+          <input class="field-input" type="password" placeholder="••••••••" value="password" />
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <button class="btn-red" style="width:100%; justify-content:center; padding:13px; font-size:12px; margin-bottom:16px; border-radius:var(--radius);">
+        Continue
+      </button>
+      <p class="mono" style="font-size:10px; color:var(--muted); text-align:center; cursor:pointer;">Forgot password?</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 2 · MY ROUTINES
+════════════════════════════════════════ -->
+<div id="routines" class="page-section">
+  <div class="app-shell">
+    <aside class="icon-rail">
+      <div class="rail-logo">
+        <i data-lucide="dumbbell" style="width:15px;height:15px;color:#fff;"></i>
+      </div>
+      <div class="rail-btn active" title="My Routines">
+        <i data-lucide="calendar"></i>
+      </div>
+      <div class="rail-btn" title="AI Generator">
+        <i data-lucide="sparkles"></i>
+      </div>
+      <div class="rail-btn" title="Analytics">
+        <i data-lucide="bar-chart-2"></i>
+      </div>
+      <div class="rail-spacer"></div>
+      <div class="rail-avatar">J</div>
+    </aside>
+    <div class="main">
+      <div class="main-header">
+        <div>
+          <p class="main-eyebrow">3 routines</p>
+          <h2 class="main-title">My Routines</h2>
+        </div>
+        <button class="btn-red">
+          <i data-lucide="plus" style="width:13px;height:13px;"></i> New
+        </button>
+      </div>
+      <div class="main-body">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+
+          <!-- Card 1 — active/most recent -->
+          <div class="card" style="border-color: var(--border-2);">
+            <div style="padding:14px 16px; display:flex; align-items:center; gap:16px;">
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                  <span style="font-size:14px; font-weight:600; color:var(--white); letter-spacing:-0.01em;">Push Day</span>
+                  <span class="pill pill-red">Chest</span>
+                </div>
+                <p class="mono" style="font-size:10px; color:var(--muted);">6 exercises · Last done 2 days ago</p>
+              </div>
+              <button class="btn-red" style="flex-shrink:0; padding:8px 18px;">Start</button>
+            </div>
+            <!-- Exercise preview -->
+            <div style="padding:10px 16px 14px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:4px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="color:var(--red); font-size:9px;" class="mono">›</span>
+                <span style="font-size:11px; color:var(--text-2);">Barbell Bench Press</span>
+                <span style="font-size:10px; color:var(--muted);" class="mono">4×8</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="color:var(--muted); font-size:9px;" class="mono">›</span>
+                <span style="font-size:11px; color:var(--muted);">Incline Dumbbell Press</span>
+                <span style="font-size:10px; color:var(--muted);" class="mono">3×10</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="color:var(--muted); font-size:9px;" class="mono">›</span>
+                <span style="font-size:11px; color:var(--muted);">Cable Flyes</span>
+                <span style="font-size:10px; color:var(--muted);" class="mono">3×12</span>
+              </div>
+              <p class="mono" style="font-size:10px; color:var(--border-2); padding-left:13px;">+3 more</p>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="card">
+            <div style="padding:14px 16px; display:flex; align-items:center; gap:16px;">
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                  <span style="font-size:14px; font-weight:600; color:var(--white);">Leg Day</span>
+                  <span class="pill pill-dim">Legs</span>
+                </div>
+                <p class="mono" style="font-size:10px; color:var(--muted);">5 exercises · Last done 4 days ago</p>
+              </div>
+              <button class="btn-ghost" style="flex-shrink:0; padding:8px 18px;">Start</button>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="card">
+            <div style="padding:14px 16px; display:flex; align-items:center; gap:16px;">
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                  <span style="font-size:14px; font-weight:600; color:var(--white);">Upper Power A</span>
+                  <span class="pill pill-dim">Upper</span>
+                </div>
+                <p class="mono" style="font-size:10px; color:var(--muted);">4 exercises · Last done 6 days ago</p>
+              </div>
+              <button class="btn-ghost" style="flex-shrink:0; padding:8px 18px;">Start</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 3 · ROUTINES EMPTY STATE
+════════════════════════════════════════ -->
+<div id="routines-empty" class="page-section">
+  <div class="app-shell">
+    <aside class="icon-rail">
+      <div class="rail-logo"><i data-lucide="dumbbell" style="width:15px;height:15px;color:#fff;"></i></div>
+      <div class="rail-btn active"><i data-lucide="calendar"></i></div>
+      <div class="rail-btn"><i data-lucide="sparkles"></i></div>
+      <div class="rail-btn"><i data-lucide="bar-chart-2"></i></div>
+      <div class="rail-spacer"></div>
+      <div class="rail-avatar">J</div>
+    </aside>
+    <div class="main">
+      <div class="main-header">
+        <div>
+          <p class="main-eyebrow">0 routines</p>
+          <h2 class="main-title">My Routines</h2>
+        </div>
+        <button class="btn-red"><i data-lucide="plus" style="width:13px;height:13px;"></i> New</button>
+      </div>
+      <div class="main-body" style="display:flex; align-items:center; justify-content:center; min-height:400px;">
+        <div style="text-align:center; max-width:320px;">
+          <div style="width:48px; height:48px; background:var(--bg-2); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+            <i data-lucide="dumbbell" style="width:22px;height:22px;color:var(--muted);"></i>
+          </div>
+          <h3 style="font-size:16px; font-weight:600; color:var(--white); margin-bottom:8px; letter-spacing:-0.01em;">No routines yet</h3>
+          <p style="font-size:12px; color:var(--dim); line-height:1.6; margin-bottom:24px;">Create your first routine manually or let the AI build one for your goals.</p>
+          <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+            <button class="btn-red"><i data-lucide="sparkles" style="width:12px;height:12px;"></i> Generate with AI</button>
+            <button class="btn-ghost"><i data-lucide="plus" style="width:12px;height:12px;"></i> Build manually</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 4 · AI GENERATOR (BLANK)
+════════════════════════════════════════ -->
+<div id="generator" class="page-section">
+  <div class="app-shell">
+    <aside class="icon-rail">
+      <div class="rail-logo"><i data-lucide="dumbbell" style="width:15px;height:15px;color:#fff;"></i></div>
+      <div class="rail-btn"><i data-lucide="calendar"></i></div>
+      <div class="rail-btn active"><i data-lucide="sparkles"></i></div>
+      <div class="rail-btn"><i data-lucide="bar-chart-2"></i></div>
+      <div class="rail-spacer"></div>
+      <div class="rail-avatar">J</div>
+    </aside>
+    <div class="main">
+      <div class="main-header">
+        <div>
+          <p class="main-eyebrow">AI Generator</p>
+          <h2 class="main-title">Build a program.</h2>
+        </div>
+      </div>
+      <div class="main-body">
+        <div class="main-body-inner" style="display:flex; flex-direction:column; gap:16px;">
+          <div class="card">
+            <div class="card-header">
+              <span style="font-size:12px; font-weight:600; color:var(--text);">Parameters</span>
+              <span style="font-size:10px; color:var(--muted);" class="mono">Define your target</span>
+            </div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="field">
+                  <span class="field-label">Muscle group</span>
+                  <input class="field-input" type="text" placeholder="e.g. Chest, Legs…" />
+                </div>
+                <div class="field">
+                  <span class="field-label">Experience level</span>
+                  <input class="field-input" type="text" placeholder="Beginner / Intermediate…" />
+                </div>
+              </div>
+              <div class="field">
+                <span class="field-label">Goal (optional)</span>
+                <input class="field-input" type="text" placeholder="e.g. Hypertrophy, Strength, Endurance…" />
+              </div>
+              <button class="btn-red" style="align-self:flex-end; padding:10px 24px;">
+                <i data-lucide="sparkles" style="width:12px;height:12px;"></i> Generate Plan
+              </button>
+            </div>
+          </div>
+          <!-- Empty result placeholder -->
+          <div style="border:1px dashed var(--border-2); border-radius:var(--radius); padding:40px 24px; text-align:center;">
+            <p style="font-size:12px; color:var(--muted); font-family:var(--mono); text-transform:uppercase; letter-spacing:0.1em;">Your generated routine will appear here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 5 · AI GENERATOR WITH RESULT
+════════════════════════════════════════ -->
+<div id="generator-result" class="page-section">
+  <div class="app-shell">
+    <aside class="icon-rail">
+      <div class="rail-logo"><i data-lucide="dumbbell" style="width:15px;height:15px;color:#fff;"></i></div>
+      <div class="rail-btn"><i data-lucide="calendar"></i></div>
+      <div class="rail-btn active"><i data-lucide="sparkles"></i></div>
+      <div class="rail-btn"><i data-lucide="bar-chart-2"></i></div>
+      <div class="rail-spacer"></div>
+      <div class="rail-avatar">J</div>
+    </aside>
+    <div class="main">
+      <div class="main-header">
+        <div>
+          <p class="main-eyebrow">AI Generator · Chest</p>
+          <h2 class="main-title">Chest Destroyer Protocol</h2>
+        </div>
+        <button class="btn-red"><i data-lucide="bookmark" style="width:12px;height:12px;"></i> Save Routine</button>
+      </div>
+      <div class="main-body">
+        <div class="main-body-inner" style="display:flex; flex-direction:column; gap:8px;">
+
+          <!-- Exercise rows -->
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">01</span>
+                <span style="font-size:13px; font-weight:600; color:var(--white);">Barbell Bench Press</span>
+              </div>
+              <span class="mono" style="font-size:11px; color:var(--muted);">4×8</span>
+            </div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:6px;">
+              <p style="font-size:11px; color:var(--text-2); line-height:1.6;"><span style="color:var(--red);">›</span> Keep shoulder blades retracted and depressed throughout the movement.</p>
+              <p class="mono" style="font-size:10px; color:var(--muted);">Suggested load: 135 lbs</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span class="mono" style="font-size:10px; color:var(--muted); font-weight:700;">02</span>
+                <span style="font-size:13px; font-weight:600; color:var(--white);">Incline Dumbbell Press</span>
+              </div>
+              <span class="mono" style="font-size:11px; color:var(--muted);">3×10</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:11px; color:var(--text-2); line-height:1.6;"><span style="color:var(--red);">›</span> Set bench to 30–45° for optimal upper chest activation.</p>
+              <p class="mono" style="font-size:10px; color:var(--muted); margin-top:6px;">Suggested load: 50 lbs</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span class="mono" style="font-size:10px; color:var(--muted); font-weight:700;">03</span>
+                <span style="font-size:13px; font-weight:600; color:var(--white);">Cable Crossover</span>
+              </div>
+              <span class="mono" style="font-size:11px; color:var(--muted);">3×12</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:11px; color:var(--text-2); line-height:1.6;"><span style="color:var(--red);">›</span> Focus on the squeeze at peak contraction for maximum mind-muscle connection.</p>
+              <p class="mono" style="font-size:10px; color:var(--muted); margin-top:6px;">Suggested load: 30 lbs</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span class="mono" style="font-size:10px; color:var(--muted); font-weight:700;">04</span>
+                <span style="font-size:13px; font-weight:600; color:var(--white);">Dips (Weighted)</span>
+              </div>
+              <span class="mono" style="font-size:11px; color:var(--muted);">3×10</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:11px; color:var(--text-2); line-height:1.6;"><span style="color:var(--red);">›</span> Lean forward slightly to emphasise chest over triceps.</p>
+              <p class="mono" style="font-size:10px; color:var(--muted); margin-top:6px;">Suggested load: 25 lbs</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 6 · CUSTOM ROUTINE BUILDER
+════════════════════════════════════════ -->
+<div id="custom-builder" class="page-section">
+  <div class="app-shell">
+    <aside class="icon-rail">
+      <div class="rail-logo"><i data-lucide="dumbbell" style="width:15px;height:15px;color:#fff;"></i></div>
+      <div class="rail-btn active"><i data-lucide="calendar"></i></div>
+      <div class="rail-btn"><i data-lucide="sparkles"></i></div>
+      <div class="rail-btn"><i data-lucide="bar-chart-2"></i></div>
+      <div class="rail-spacer"></div>
+      <div class="rail-avatar">J</div>
+    </aside>
+    <div class="main">
+      <div class="main-header">
+        <div>
+          <p class="main-eyebrow">New Routine</p>
+          <h2 class="main-title">Configure Routine</h2>
+        </div>
+        <button class="btn-ghost">Discard</button>
+      </div>
+      <div class="main-body">
+        <div style="max-width:560px; display:flex; flex-direction:column; gap:16px;">
+          <div class="card">
+            <div class="card-header"><span style="font-size:12px;font-weight:600;color:var(--text);">Identifier</span></div>
+            <div class="card-body">
+              <div class="field">
+                <span class="field-label">Routine name</span>
+                <input class="field-input" type="text" placeholder="e.g. Upper Power A" />
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header" style="justify-content:space-between;">
+              <span style="font-size:12px;font-weight:600;color:var(--text);">Protocol Structure</span>
+              <div style="display:flex;gap:8px;">
+                <button class="btn-ghost" style="padding:5px 10px; font-size:10px;"><i data-lucide="plus" style="width:11px;height:11px;"></i> Strength</button>
+                <button class="btn-ghost" style="padding:5px 10px; font-size:10px;"><i data-lucide="plus" style="width:11px;height:11px;"></i> Cardio</button>
+              </div>
+            </div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+
+              <!-- Exercise row -->
+              <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                <div style="flex:1; min-width:140px;">
+                  <div class="field-label" style="margin-bottom:4px;">Exercise</div>
+                  <input class="field-input" style="background:transparent; border-color:var(--border-2);" type="text" value="Bench Press" />
+                </div>
+                <div style="width:56px;">
+                  <div class="field-label" style="margin-bottom:4px;">Sets</div>
+                  <input class="field-input" style="background:transparent; border-color:var(--border-2); text-align:center; padding:10px 6px;" type="number" value="4" />
+                </div>
+                <div style="width:56px;">
+                  <div class="field-label" style="margin-bottom:4px;">Reps</div>
+                  <input class="field-input" style="background:transparent; border-color:var(--border-2); text-align:center; padding:10px 6px;" type="number" value="8" />
+                </div>
+                <button style="background:none;border:none;cursor:pointer;color:var(--muted);padding:8px;" title="Remove">
+                  <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                </button>
+              </div>
+
+              <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                <div style="flex:1; min-width:140px;">
+                  <div class="field-label" style="margin-bottom:4px;">Exercise</div>
+                  <input class="field-input" style="background:transparent; border-color:var(--border-2);" type="text" value="Overhead Press" />
+                </div>
+                <div style="width:56px;">
+                  <div class="field-label" style="margin-bottom:4px;">Sets</div>
+                  <input class="field-input" style="background:transparent; border-color:var(--border-2); text-align:center; padding:10px 6px;" type="number" value="3" />
+                </div>
+                <div style="width:56px;">
+                  <div class="field-label" style="margin-bottom:4px;">Reps</div>
+                  <input class="field-input" style="background:transparent; border-color:var(--border-2); text-align:center; padding:10px 6px;" type="number" value="10" />
+                </div>
+                <button style="background:none;border:none;cursor:pointer;color:var(--muted);padding:8px;">
+                  <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                </button>
+              </div>
+
+              <!-- Cardio row -->
+              <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                <div style="flex:1; min-width:140px;">
+                  <div class="field-label" style="margin-bottom:4px;">Cardio activity</div>
+                  <input class="field-input" style="background:transparent; border-color:var(--border-2);" type="text" value="Treadmill Run" />
+                </div>
+                <div style="width:56px;">
+                  <div class="field-label" style="margin-bottom:4px;">Min</div>
+                  <input class="field-input" style="background:transparent; border-color:var(--border-2); text-align:center; padding:10px 6px;" type="number" value="30" />
+                </div>
+                <div style="width:56px;">
+                  <div class="field-label" style="margin-bottom:4px;">Dist</div>
+                  <input class="field-input" style="background:transparent; border-color:var(--border-2); text-align:center; padding:10px 6px;" type="number" value="3" />
+                </div>
+                <button style="background:none;border:none;cursor:pointer;color:var(--muted);padding:8px;">
+                  <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <button class="btn-red" style="align-self:stretch; justify-content:center; padding:13px; font-size:12px; border-radius:var(--radius);">
+            <i data-lucide="check" style="width:13px;height:13px;"></i> Save Routine
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 7 · LIVE WORKOUT
+════════════════════════════════════════ -->
+<div id="live-workout" class="page-section">
+  <div style="display:flex; flex-direction:column; min-height:calc(100vh - 48px); background:var(--bg);">
+
+    <!-- Workout header bar -->
+    <header style="height:56px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 24px; flex-shrink:0; background:var(--bg);">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="width:8px; height:8px; background:var(--red); border-radius:50%; display:inline-block;" class="pulse"></span>
+        <div>
+          <p style="font-size:14px; font-weight:600; color:var(--white); letter-spacing:-0.01em;">Push Day</p>
+          <p class="mono" style="font-size:10px; color:var(--muted);">1 / 2 done · 14 min elapsed</p>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <!-- Rest timer config -->
+        <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 12px; display:flex; align-items:center; gap:6px;">
+          <i data-lucide="timer" style="width:12px;height:12px;color:var(--muted);"></i>
+          <input type="number" value="90" style="background:transparent; color:var(--text); border:none; outline:none; width:28px; font-family:var(--mono); font-size:11px; text-align:right;" />
+          <span class="mono" style="font-size:10px; color:var(--muted);">sec</span>
+        </div>
+        <!-- Unit toggle -->
+        <div style="display:flex; background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden;">
+          <button style="padding:5px 10px; font-size:10px; font-weight:700; font-family:var(--sans); background:var(--bg-3); color:var(--white); border:none; cursor:pointer; text-transform:uppercase; letter-spacing:0.06em;">lbs</button>
+          <button style="padding:5px 10px; font-size:10px; font-weight:700; font-family:var(--sans); background:transparent; color:var(--muted); border:none; cursor:pointer; text-transform:uppercase; letter-spacing:0.06em;">kgs</button>
+        </div>
+        <button class="btn-ghost" style="padding:7px 14px;">Abort</button>
+        <button class="btn-red" style="padding:7px 16px;">Finish Session</button>
+      </div>
+    </header>
+
+    <!-- Exercise area -->
+    <div style="flex:1; padding:20px 24px; display:flex; flex-direction:column; gap:10px; overflow-y:auto;">
+
+      <!-- Active exercise card -->
+      <div class="card" style="border-color:var(--border-2);">
+        <div class="card-header">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">01</span>
+            <span style="font-size:14px; font-weight:600; color:var(--white);">Barbell Bench Press</span>
+            <span class="mono" style="font-size:10px; color:var(--muted);">4×8</span>
+          </div>
+          <div class="set-squares">
+            <div class="set-sq done"></div>
+            <div class="set-sq pending"></div>
+            <div class="set-sq pending"></div>
+            <div class="set-sq pending"></div>
+          </div>
+        </div>
+
+        <!-- Set table -->
+        <table class="data-table" style="table-layout:fixed;">
+          <thead>
+            <tr>
+              <th style="width:80px;">Set</th>
+              <th>Weight</th>
+              <th>Reps</th>
+              <th style="text-align:right; width:100px;">Status</th>
+              <th style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span style="color:var(--text-2);">01 / 4</span><br><span class="mono" style="font-size:9px; color:var(--border-2);">prev: 135×8</span></td>
+              <td><input type="number" value="135" style="background:transparent; border-bottom:1px solid var(--border-2); width:60px; outline:none; color:var(--white); padding:3px; font-family:var(--mono); font-size:13px; font-weight:700;" /></td>
+              <td><input type="number" value="8" style="background:transparent; border-bottom:1px solid var(--border-2); width:48px; outline:none; color:var(--white); padding:3px; font-family:var(--mono); font-size:13px; font-weight:700;" /></td>
+              <td style="text-align:right;"><button class="btn-red" style="padding:5px 12px; font-size:10px;">Done</button></td>
+              <td style="text-align:right;"><button style="background:none;border:none;cursor:pointer;color:var(--muted);"><i data-lucide="x" style="width:13px;height:13px;"></i></button></td>
+            </tr>
+            <tr>
+              <td><span style="color:var(--text-2);">02 / 4</span><br><span class="mono" style="font-size:9px; color:var(--border-2);">prev: 135×8</span></td>
+              <td><input type="number" value="135" style="background:transparent; border-bottom:1px solid var(--border-2); width:60px; outline:none; color:var(--white); padding:3px; font-family:var(--mono); font-size:13px; font-weight:700;" /></td>
+              <td><input type="number" value="8" style="background:transparent; border-bottom:1px solid var(--border-2); width:48px; outline:none; color:var(--white); padding:3px; font-family:var(--mono); font-size:13px; font-weight:700;" /></td>
+              <td style="text-align:right;"><button class="btn-ghost" style="padding:5px 12px; font-size:10px; color:var(--muted);">Pending</button></td>
+              <td style="text-align:right;"><button style="background:none;border:none;cursor:pointer;color:var(--muted);"><i data-lucide="x" style="width:13px;height:13px;"></i></button></td>
+            </tr>
+            <tr>
+              <td><span style="color:var(--text-2);">03 / 4</span></td>
+              <td><input type="number" value="0" style="background:transparent; border-bottom:1px solid var(--border-2); width:60px; outline:none; color:var(--white); padding:3px; font-family:var(--mono); font-size:13px; font-weight:700;" /></td>
+              <td><input type="number" value="8" style="background:transparent; border-bottom:1px solid var(--border-2); width:48px; outline:none; color:var(--white); padding:3px; font-family:var(--mono); font-size:13px; font-weight:700;" /></td>
+              <td style="text-align:right;"><button class="btn-ghost" style="padding:5px 12px; font-size:10px; color:var(--muted);">Pending</button></td>
+              <td style="text-align:right;"><button style="background:none;border:none;cursor:pointer;color:var(--muted);"><i data-lucide="x" style="width:13px;height:13px;"></i></button></td>
+            </tr>
+            <tr>
+              <td><span style="color:var(--text-2);">04 / 4</span></td>
+              <td><input type="number" value="0" style="background:transparent; border-bottom:1px solid var(--border-2); width:60px; outline:none; color:var(--white); padding:3px; font-family:var(--mono); font-size:13px; font-weight:700;" /></td>
+              <td><input type="number" value="8" style="background:transparent; border-bottom:1px solid var(--border-2); width:48px; outline:none; color:var(--white); padding:3px; font-family:var(--mono); font-size:13px; font-weight:700;" /></td>
+              <td style="text-align:right;"><button class="btn-ghost" style="padding:5px 12px; font-size:10px; color:var(--muted);">Pending</button></td>
+              <td style="text-align:right;"><button style="background:none;border:none;cursor:pointer;color:var(--muted);"><i data-lucide="x" style="width:13px;height:13px;"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="padding:10px 16px; border-top:1px solid var(--border);">
+          <button class="btn-ghost" style="font-size:10px; padding:6px 12px;">
+            <i data-lucide="plus" style="width:11px;height:11px;"></i> Add Set
+          </button>
+        </div>
+      </div>
+
+      <!-- Dimmed upcoming exercise -->
+      <div class="card" style="opacity:0.45;">
+        <div class="card-header">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="mono" style="font-size:10px; color:var(--muted); font-weight:700;">02</span>
+            <span style="font-size:14px; font-weight:600; color:var(--white);">Treadmill Run</span>
+            <span class="mono" style="font-size:10px; color:var(--muted);">30 min</span>
+          </div>
+          <span class="pill pill-dim">Cardio</span>
+        </div>
+      </div>
+
+      <!-- Add exercise button -->
+      <button style="width:100%; border:1px dashed var(--border-2); background:none; color:var(--muted); border-radius:var(--radius); padding:14px; font-family:var(--sans); font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:border-color 0.12s;">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Exercise
+      </button>
+    </div>
+
+    <!-- Status footer -->
+    <footer style="height:38px; border-top:1px solid var(--border); background:var(--bg); display:flex; align-items:center; padding:0 24px; justify-content:space-between; flex-shrink:0;">
+      <div style="display:flex; gap:24px;" class="mono" style="font-size:10px;">
+        <span style="font-size:10px; color:var(--muted); font-family:var(--mono);">Sets <span style="color:var(--white); font-weight:700;">1 / 4</span></span>
+        <span style="font-size:10px; color:var(--muted); font-family:var(--mono);">Volume <span style="color:var(--white); font-weight:700;">1,080 lbs</span></span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;" class="mono">
+        <span style="width:5px; height:5px; background:var(--red); border-radius:50%; display:inline-block;" class="pulse"></span>
+        <span style="font-size:10px; color:var(--muted); font-family:var(--mono);">LIVE</span>
+      </div>
+    </footer>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 8 · LIVE WORKOUT WITH REST TIMER
+════════════════════════════════════════ -->
+<div id="live-workout-timer" class="page-section">
+  <div style="display:flex; flex-direction:column; min-height:calc(100vh - 48px); background:var(--bg);">
+    <!-- Header (same as live workout) -->
+    <header style="height:56px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 24px; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="width:8px; height:8px; background:var(--red); border-radius:50%;" class="pulse"></span>
+        <div>
+          <p style="font-size:14px; font-weight:600; color:var(--white);">Push Day</p>
+          <p class="mono" style="font-size:10px; color:var(--muted);">1 / 2 done · 14 min</p>
+        </div>
+      </div>
+      <button class="btn-red">Finish Session</button>
+    </header>
+
+    <!-- Full-screen rest timer takeover -->
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 32px; text-align:center;">
+      <p class="mono" style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.15em; margin-bottom:16px;">Resting</p>
+      <p class="mono" style="font-size:80px; font-weight:700; color:var(--white); line-height:1; letter-spacing:-0.04em; margin-bottom:28px;">1:23</p>
+
+      <!-- Progress bar -->
+      <div style="width:100%; max-width:280px; height:2px; background:var(--bg-3); border-radius:1px; margin-bottom:20px; overflow:hidden;">
+        <div style="width:62%; height:100%; background:var(--red); border-radius:1px;"></div>
+      </div>
+
+      <p style="font-size:13px; color:var(--dim); margin-bottom:32px; font-weight:500;">Next · Set <strong style="color:var(--text);">03 / 4</strong> at 135 lbs × 8 reps</p>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn-ghost" style="padding:10px 22px; font-size:12px;">+30s</button>
+        <button class="btn-ghost" style="padding:10px 22px; font-size:12px; border-color:var(--border-2); color:var(--text-2);">Skip Rest</button>
+      </div>
+
+      <!-- Low-time warning variant note -->
+      <div style="margin-top:48px; padding:12px 20px; background:rgba(192,57,43,0.08); border:1px solid rgba(192,57,43,0.2); border-radius:var(--radius);">
+        <p class="mono" style="font-size:10px; color:var(--red); letter-spacing:0.08em; text-transform:uppercase;">Timer goes red + pulses when under 10 seconds</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="height:38px; border-top:1px solid var(--border); display:flex; align-items:center; padding:0 24px; justify-content:space-between; flex-shrink:0;">
+      <span class="mono" style="font-size:10px; color:var(--muted);">Sets <span style="color:var(--white); font-weight:700;">1 / 4</span></span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="width:5px; height:5px; background:var(--red); border-radius:50%;" class="pulse"></span>
+        <span class="mono" style="font-size:10px; color:var(--muted);">LIVE</span>
+      </div>
+    </footer>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 9 · ANALYTICS
+════════════════════════════════════════ -->
+<div id="analytics" class="page-section">
+  <div class="app-shell">
+    <aside class="icon-rail">
+      <div class="rail-logo"><i data-lucide="dumbbell" style="width:15px;height:15px;color:#fff;"></i></div>
+      <div class="rail-btn"><i data-lucide="calendar"></i></div>
+      <div class="rail-btn"><i data-lucide="sparkles"></i></div>
+      <div class="rail-btn active"><i data-lucide="bar-chart-2"></i></div>
+      <div class="rail-spacer"></div>
+      <div class="rail-avatar">J</div>
+    </aside>
+    <div class="main">
+      <div class="main-header">
+        <div>
+          <p class="main-eyebrow">Week of May 12 – 18, 2026</p>
+          <h2 class="main-title">Analytics</h2>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-ghost" style="padding:7px;"><i data-lucide="chevron-left" style="width:14px;height:14px;"></i></button>
+          <button class="btn-ghost" style="padding:7px;"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></button>
+        </div>
+      </div>
+      <div class="main-body">
+        <div style="display:flex; flex-direction:column; gap:20px;">
+
+          <!-- Week calendar -->
+          <div class="card">
+            <div style="display:grid; grid-template-columns:repeat(7,1fr);">
+              <!-- Mon -->
+              <div style="padding:12px 8px; min-height:120px; border-right:1px solid var(--border); display:flex; flex-direction:column;">
+                <p class="mono" style="font-size:9px; color:var(--muted); margin-bottom:4px;">Mon</p>
+                <p style="font-size:16px; font-weight:600; color:var(--text-2); margin-bottom:10px;">12</p>
+                <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px; margin-top:auto; cursor:pointer;">
+                  <p style="font-size:9px; font-weight:600; color:var(--white); text-transform:uppercase; margin-bottom:3px;">Chest</p>
+                  <p class="mono" style="font-size:9px; color:var(--red);">16 sets</p>
+                </div>
+              </div>
+              <!-- Tue -->
+              <div style="padding:12px 8px; min-height:120px; border-right:1px solid var(--border); display:flex; flex-direction:column;">
+                <p class="mono" style="font-size:9px; color:var(--muted); margin-bottom:4px;">Tue</p>
+                <p style="font-size:16px; font-weight:600; color:var(--text-2); margin-bottom:10px;">13</p>
+                <p class="mono" style="font-size:9px; color:var(--border-2); margin-top:auto; text-align:center; text-transform:uppercase;">Rest</p>
+              </div>
+              <!-- Wed -->
+              <div style="padding:12px 8px; min-height:120px; border-right:1px solid var(--border); display:flex; flex-direction:column;">
+                <p class="mono" style="font-size:9px; color:var(--muted); margin-bottom:4px;">Wed</p>
+                <p style="font-size:16px; font-weight:600; color:var(--text-2); margin-bottom:10px;">14</p>
+                <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px; margin-top:auto; cursor:pointer;">
+                  <p style="font-size:9px; font-weight:600; color:var(--white); text-transform:uppercase; margin-bottom:3px;">Back</p>
+                  <p class="mono" style="font-size:9px; color:var(--red);">12 sets</p>
+                </div>
+              </div>
+              <!-- Thu -->
+              <div style="padding:12px 8px; min-height:120px; border-right:1px solid var(--border); display:flex; flex-direction:column;">
+                <p class="mono" style="font-size:9px; color:var(--muted); margin-bottom:4px;">Thu</p>
+                <p style="font-size:16px; font-weight:600; color:var(--text-2); margin-bottom:10px;">15</p>
+                <p class="mono" style="font-size:9px; color:var(--border-2); margin-top:auto; text-align:center; text-transform:uppercase;">Rest</p>
+              </div>
+              <!-- Fri -->
+              <div style="padding:12px 8px; min-height:120px; border-right:1px solid var(--border); display:flex; flex-direction:column;">
+                <p class="mono" style="font-size:9px; color:var(--muted); margin-bottom:4px;">Fri</p>
+                <p style="font-size:16px; font-weight:600; color:var(--text-2); margin-bottom:10px;">16</p>
+                <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px; margin-top:auto; cursor:pointer;">
+                  <p style="font-size:9px; font-weight:600; color:var(--white); text-transform:uppercase; margin-bottom:3px;">Legs</p>
+                  <p class="mono" style="font-size:9px; color:var(--red);">18 sets</p>
+                </div>
+              </div>
+              <!-- Sat -->
+              <div style="padding:12px 8px; min-height:120px; border-right:1px solid var(--border); display:flex; flex-direction:column;">
+                <p class="mono" style="font-size:9px; color:var(--muted); margin-bottom:4px;">Sat</p>
+                <p style="font-size:16px; font-weight:600; color:var(--text-2); margin-bottom:10px;">17</p>
+                <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px; margin-top:auto; cursor:pointer;">
+                  <p style="font-size:9px; font-weight:600; color:var(--white); text-transform:uppercase; margin-bottom:3px;">Cardio</p>
+                  <p class="mono" style="font-size:9px; color:var(--red);">35 min</p>
+                </div>
+              </div>
+              <!-- Sun (today) -->
+              <div style="padding:12px 8px; min-height:120px; background:rgba(192,57,43,0.04); display:flex; flex-direction:column;">
+                <p class="mono" style="font-size:9px; color:var(--muted); margin-bottom:4px;">Sun</p>
+                <p style="font-size:16px; font-weight:600; color:var(--red); margin-bottom:10px;">18</p>
+                <p class="mono" style="font-size:9px; color:var(--border-2); margin-top:auto; text-align:center; text-transform:uppercase;">Rest</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly summary table -->
+          <div class="card">
+            <div class="card-header">
+              <span style="font-size:12px; font-weight:600; color:var(--text);">Weekly Output</span>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Target area</th>
+                  <th style="text-align:right;">Volume (sets)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="color:var(--white); font-weight:600; text-transform:uppercase;">Legs</td><td style="text-align:right; color:var(--red); font-weight:700;">18</td></tr>
+                <tr><td style="color:var(--white); font-weight:600; text-transform:uppercase;">Chest</td><td style="text-align:right; color:var(--red); font-weight:700;">16</td></tr>
+                <tr><td style="color:var(--white); font-weight:600; text-transform:uppercase;">Back</td><td style="text-align:right; color:var(--red); font-weight:700;">12</td></tr>
+                <tr><td style="color:var(--white); font-weight:600; text-transform:uppercase;">Cardio (min)</td><td style="text-align:right; color:var(--red); font-weight:700;">35</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 10 · ANALYTICS WORKOUT MODAL
+════════════════════════════════════════ -->
+<div id="analytics-modal" class="page-section">
+  <div style="min-height:calc(100vh - 48px); position:relative;">
+    <!-- Dimmed background -->
+    <div style="opacity:0.1; pointer-events:none; position:absolute; inset:0; background:var(--bg);"></div>
+
+    <!-- Modal overlay -->
+    <div style="min-height:calc(100vh - 48px); display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,0,0.75);">
+      <div style="background:var(--bg-1); border:1px solid var(--border-2); border-radius:12px; width:100%; max-width:600px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden;">
+
+        <!-- Modal header -->
+        <div style="padding:18px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; flex-shrink:0;">
+          <div>
+            <h3 style="font-size:15px; font-weight:700; color:var(--white); letter-spacing:-0.01em; margin-bottom:3px;">Push Day — Chest & Triceps</h3>
+            <p class="mono" style="font-size:10px; color:var(--muted);">May 12, 2026 · 10:30 AM</p>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button style="background:none; border:none; cursor:pointer; color:var(--muted); padding:6px;">
+              <i data-lucide="trash-2" style="width:15px;height:15px;"></i>
+            </button>
+            <button style="background:none; border:none; cursor:pointer; color:var(--text-2); padding:6px;">
+              <i data-lucide="x" style="width:15px;height:15px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal body -->
+        <div style="overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:12px;">
+
+          <div class="card">
+            <div class="card-header"><span style="font-size:11px; font-weight:600; color:var(--text);">01. Barbell Bench Press</span></div>
+            <table class="data-table">
+              <thead><tr><th>Set</th><th>lbs</th><th>Reps</th><th style="text-align:right;">Status</th></tr></thead>
+              <tbody>
+                <tr><td>01</td><td style="color:var(--white);">135</td><td style="color:var(--white);">8</td><td style="text-align:right;" class="status-done">Done</td></tr>
+                <tr><td>02</td><td style="color:var(--white);">135</td><td style="color:var(--white);">8</td><td style="text-align:right;" class="status-done">Done</td></tr>
+                <tr><td>03</td><td style="color:var(--white);">145</td><td style="color:var(--white);">6</td><td style="text-align:right;" class="status-done">Done</td></tr>
+                <tr><td>04</td><td style="color:var(--white);">145</td><td style="color:var(--white);">5</td><td style="text-align:right;" class="status-skip">Skip</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span style="font-size:11px; font-weight:600; color:var(--text);">02. Incline Dumbbell Press</span></div>
+            <table class="data-table">
+              <thead><tr><th>Set</th><th>lbs</th><th>Reps</th><th style="text-align:right;">Status</th></tr></thead>
+              <tbody>
+                <tr><td>01</td><td style="color:var(--white);">50</td><td style="color:var(--white);">10</td><td style="text-align:right;" class="status-done">Done</td></tr>
+                <tr><td>02</td><td style="color:var(--white);">50</td><td style="color:var(--white);">10</td><td style="text-align:right;" class="status-done">Done</td></tr>
+                <tr><td>03</td><td style="color:var(--white);">55</td><td style="color:var(--white);">8</td><td style="text-align:right;" class="status-done">Done</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span style="font-size:11px; font-weight:600; color:var(--text);">03. Treadmill Run</span></div>
+            <div class="card-body">
+              <div style="display:flex; gap:24px;" class="mono">
+                <span style="font-size:11px; color:var(--muted);">Duration: <strong style="color:var(--red);">30 min</strong></span>
+                <span style="font-size:11px; color:var(--muted);">Distance: <strong style="color:var(--red);">3 mi</strong></span>
+                <span style="font-size:11px; color:var(--red); margin-left:auto;" class="status-done">Done</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 11 · ADD EXERCISE MODAL
+════════════════════════════════════════ -->
+<div id="add-exercise-modal" class="page-section">
+  <div style="min-height:calc(100vh - 48px); display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,0,0.75);">
+    <div style="background:var(--bg-1); border:1px solid var(--border-2); border-radius:12px; width:100%; max-width:440px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden;">
+
+      <!-- Header -->
+      <div style="padding:16px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+        <h3 style="font-size:14px; font-weight:700; color:var(--white); letter-spacing:-0.01em;">Add Exercise</h3>
+        <button style="background:none; border:none; cursor:pointer; color:var(--muted);">
+          <i data-lucide="x" style="width:15px;height:15px;"></i>
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div style="padding:14px 18px; border-bottom:1px solid var(--border); flex-shrink:0;">
+        <div style="position:relative;">
+          <input class="field-input" type="text" placeholder="Search exercises…" style="padding-left:36px;" />
+          <i data-lucide="search" style="position:absolute; left:11px; top:50%; transform:translateY(-50%); width:14px;height:14px;color:var(--muted); pointer-events:none;"></i>
+        </div>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
+          <input type="checkbox" checked style="accent-color:var(--red); width:13px; height:13px; cursor:pointer;" />
+          <span style="font-size:11px; color:var(--dim); font-weight:500;">Show only Chest exercises</span>
+        </label>
+      </div>
+
+      <!-- Create options -->
+      <div style="flex:1; overflow-y:auto; padding:8px;">
+
+        <!-- Create new -->
+        <div style="padding:4px 0 8px;">
+          <button style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); font-size:11px; font-weight:600; color:var(--red); background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:8px; transition:background 0.1s;">
+            <i data-lucide="plus" style="width:12px;height:12px;"></i> "Cable Fly" — Create as Strength
+          </button>
+          <button style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); font-size:11px; font-weight:600; color:var(--red); background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:8px;">
+            <i data-lucide="plus" style="width:12px;height:12px;"></i> "Cable Fly" — Create as Cardio
+          </button>
+        </div>
+
+        <div style="height:1px; background:var(--border); margin:4px 0 8px;"></div>
+
+        <!-- Previous exercises -->
+        <div style="display:flex; flex-direction:column; gap:1px;">
+          <button style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); font-size:12px; font-weight:500; color:var(--text); background:none; border:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:background 0.1s;">
+            <span>Barbell Bench Press <span class="mono" style="font-size:9px; color:var(--muted); margin-left:6px;">4 sets prev.</span></span>
+            <span class="pill pill-dim">Chest</span>
+          </button>
+          <button style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); font-size:12px; font-weight:500; color:var(--text); background:none; border:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+            <span>Incline Dumbbell Press <span class="mono" style="font-size:9px; color:var(--muted); margin-left:6px;">3 sets prev.</span></span>
+            <span class="pill pill-dim">Chest</span>
+          </button>
+          <button style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); font-size:12px; font-weight:500; color:var(--text); background:none; border:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+            <span>Dumbbell Fly <span class="mono" style="font-size:9px; color:var(--muted); margin-left:6px;">3 sets prev.</span></span>
+            <span class="pill pill-dim">Chest</span>
+          </button>
+          <button style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); font-size:12px; font-weight:500; color:var(--text); background:none; border:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+            <span>Cable Crossover <span class="mono" style="font-size:9px; color:var(--muted); margin-left:6px;">3 sets prev.</span></span>
+            <span class="pill pill-dim">Chest</span>
+          </button>
+          <button style="width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm); font-size:12px; font-weight:500; color:var(--text); background:none; border:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+            <span>Dips (Weighted) <span class="mono" style="font-size:9px; color:var(--muted); margin-left:6px;">3 sets prev.</span></span>
+            <span class="pill pill-dim">Chest</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     CHANGELOG PAGE
+════════════════════════════════════════ -->
+<div id="changelog" class="page-section">
+  <div style="min-height:calc(100vh - 48px); background:var(--bg); padding:40px 32px; max-width:960px; margin:0 auto;">
+
+    <div style="margin-bottom:40px;">
+      <p class="mono" style="font-size:10px; color:var(--muted); letter-spacing:0.14em; text-transform:uppercase; margin-bottom:8px;">Design Revamp</p>
+      <h1 style="font-size:32px; font-weight:800; color:var(--white); letter-spacing:-0.03em; margin-bottom:10px;">Before → After</h1>
+      <p style="font-size:14px; color:var(--dim); max-width:560px; line-height:1.7;">A screen-by-screen breakdown of every design decision that changed in this revamp — why it was made and what it improves for the user.</p>
+    </div>
+
+    <!-- ── GLOBAL ── -->
+    <div class="card" style="margin-bottom:16px; overflow:visible;">
+      <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+        <span style="width:6px; height:6px; background:var(--red); border-radius:50%;"></span>
+        <span style="font-size:14px; font-weight:700; color:var(--white);">Global — All Screens</span>
+      </div>
+      <div class="changelog-grid">
+        <div class="cl-col before">
+          <p class="cl-col-head">Before</p>
+          <div class="cl-item"><strong>256px sidebar</strong> with text labels on every page, consuming a third of screen width on most laptops.</div>
+          <div class="cl-item"><strong>All-caps everywhere</strong> — body copy, exercise names, button labels, nav items, card titles all uppercase.</div>
+          <div class="cl-item"><strong>font-weight: 900</strong> used throughout, making every text element compete equally for attention.</div>
+          <div class="cl-item"><strong>Deeply nested box-in-box-in-box</strong> card structure adding visual noise without hierarchy benefit.</div>
+          <div class="cl-item"><strong>Green accent scattered</strong> across DONE badges, sync dots, borders, icon colours, link text simultaneously.</div>
+          <div class="cl-item"><strong>Hardcoded inline styles</strong> on every element, making the design inconsistent and hard to maintain.</div>
+        </div>
+        <div class="cl-col after">
+          <p class="cl-col-head">After</p>
+          <div class="cl-item"><strong>60px icon rail</strong> — navigation collapses to icon-only, recovering ~196px of horizontal real estate per screen.</div>
+          <div class="cl-item"><strong>Uppercase only for metadata</strong> — set numbers, muscle tags, timestamps, and field labels. Names and sentences are mixed-case.</div>
+          <div class="cl-item"><strong>Weight scale: 400 / 600 / 700 / 800</strong> — body text, labels, headings, and hero headings each occupy a distinct tier.</div>
+          <div class="cl-item"><strong>Single card-level per logical group</strong> — content uses size, opacity, and weight for hierarchy instead of nested boxes.</div>
+          <div class="cl-item"><strong>One red element per screen</strong> — the highest-priority action only. Everything else uses ghost or muted styling.</div>
+          <div class="cl-item"><strong>CSS custom properties (--variables)</strong> throughout — one token change propagates to every screen consistently.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE 1: LOGIN ── -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+        <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">01</span>
+        <span style="font-size:14px; font-weight:700; color:var(--white);">Login</span>
+      </div>
+      <div class="changelog-grid">
+        <div class="cl-col before">
+          <p class="cl-col-head">Before</p>
+          <div class="cl-item"><strong>Centered card floating</strong> in a black void with box-shadow — a modal disguised as a page.</div>
+          <div class="cl-item"><strong>Dumbbell icon logo</strong> inside a tiny bordered square — fragile and generic.</div>
+          <div class="cl-item"><strong>Single "Initialize Session" CTA</strong> — no email/password fields visible, implying SSO only.</div>
+          <div class="cl-item"><strong>All-caps subtitle</strong> "v2.4.0 High-Performance" placed as prominent text above the CTA.</div>
+        </div>
+        <div class="cl-col after">
+          <p class="cl-col-head">After</p>
+          <div class="cl-item"><strong>Full-viewport layout</strong> — no floating card, left-aligned content with generous whitespace top and bottom.</div>
+          <div class="cl-item"><strong>Wordmark brand treatment</strong> — "Forge" bold weight 800, ".AI" light weight 400 — editorial and memorable.</div>
+          <div class="cl-item"><strong>Email + password fields</strong> with floating labels — standard login pattern users recognise immediately.</div>
+          <div class="cl-item"><strong>Contextual greeting</strong> "Good morning." — a warm human moment that replaces the version number as the emotional hook.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE 2: MY ROUTINES ── -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+        <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">02</span>
+        <span style="font-size:14px; font-weight:700; color:var(--white);">My Routines</span>
+      </div>
+      <div class="changelog-grid">
+        <div class="cl-col before">
+          <p class="cl-col-head">Before</p>
+          <div class="cl-item"><strong>Grid of square cards</strong> — three equal-height boxy cards with no visual priority between them.</div>
+          <div class="cl-item"><strong>"Initiate Session" CTA</strong> identical on every card — no affordance for which routine to do next.</div>
+          <div class="cl-item"><strong>Exercise list in monospace</strong> with "»" bullets and "+3 MORE" as plain dim text — weak information hierarchy.</div>
+          <div class="cl-item"><strong>Navigation labels text</strong> repeated as large text in the sidebar consuming vertical space.</div>
+        </div>
+        <div class="cl-col after">
+          <p class="cl-col-head">After</p>
+          <div class="cl-item"><strong>Horizontal list cards</strong> — compact rows, scannable at a glance. The most-recently-done routine expands to show preview exercises.</div>
+          <div class="cl-item"><strong>Red CTA on top card only</strong> — the next logical workout gets the primary action. Others get ghost buttons.</div>
+          <div class="cl-item"><strong>"Last done N days ago"</strong> metadata replaces the exercise count as the primary subtext — more useful at a glance.</div>
+          <div class="cl-item"><strong>Muscle group as pill tag</strong> (not prose uppercase) — colour-coded, compact, visually light.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE 3: ROUTINES EMPTY ── -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+        <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">03</span>
+        <span style="font-size:14px; font-weight:700; color:var(--white);">Routines — Empty State</span>
+      </div>
+      <div class="changelog-grid">
+        <div class="cl-col before">
+          <p class="cl-col-head">Before</p>
+          <div class="cl-item"><strong>Single dim text line</strong> in a bordered box — "No routines found. Generate one with AI or cascade custom structure." — no visual affordance.</div>
+          <div class="cl-item"><strong>No clear next action</strong> — the user must look to the sidebar navigation to figure out what to do.</div>
+        </div>
+        <div class="cl-col after">
+          <p class="cl-col-head">After</p>
+          <div class="cl-item"><strong>Centred empty state with icon</strong>, descriptive copy, and two explicit CTA buttons: "Generate with AI" (primary) and "Build manually" (secondary).</div>
+          <div class="cl-item"><strong>Onboarding moment</strong> — the empty state teaches the two workflows available rather than leaving the user stranded.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE 4/5: AI GENERATOR ── -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+        <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">04–05</span>
+        <span style="font-size:14px; font-weight:700; color:var(--white);">AI Generator + Result</span>
+      </div>
+      <div class="changelog-grid">
+        <div class="cl-col before">
+          <p class="cl-col-head">Before</p>
+          <div class="cl-item"><strong>Single text input</strong> — "Target Muscle Group" — as the only parameter. Too simple for the promise of AI generation.</div>
+          <div class="cl-item"><strong>Instruction subtext</strong> "Define target parameters. Generation engine will construct protocol." — verbose, jargon-heavy.</div>
+          <div class="cl-item"><strong>Exercise cards</strong> with full instruction paragraphs inside the card header area — information overload before the user starts.</div>
+          <div class="cl-item"><strong>Green accent heading</strong> on the AI Generator title — inconsistent with the page colour logic.</div>
+        </div>
+        <div class="cl-col after">
+          <p class="cl-col-head">After</p>
+          <div class="cl-item"><strong>Two parameter tiles</strong> (Muscle Group + Experience Level) plus an optional Goal field — more structured and trustworthy AI input.</div>
+          <div class="cl-item"><strong>Heading is a human sentence</strong>: "Build a program." — conversational, confident, no jargon.</div>
+          <div class="cl-item"><strong>Exercise rows are scannable</strong> — number, name, scheme (4×8). Coaching notes visible below but not in the card title row.</div>
+          <div class="cl-item"><strong>Save Routine CTA in header</strong> — always visible without scrolling to the bottom of a long generated list.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE 6: CUSTOM BUILDER ── -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+        <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">06</span>
+        <span style="font-size:14px; font-weight:700; color:var(--white);">Custom Routine Builder</span>
+      </div>
+      <div class="changelog-grid">
+        <div class="cl-col before">
+          <p class="cl-col-head">Before</p>
+          <div class="cl-item"><strong>"Commit Sequence"</strong> label on save button — unnecessarily cryptic. "Abort" for cancel — too aggressive a term for a form.</div>
+          <div class="cl-item"><strong>Form inputs use JetBrains Mono</strong> inline in a card that's otherwise Syne — jarring typographic switch mid-layout.</div>
+          <div class="cl-item"><strong>White background CTA</strong> — breaks the dark aesthetic and introduces an inconsistent button style used nowhere else.</div>
+        </div>
+        <div class="cl-col after">
+          <p class="cl-col-head">After</p>
+          <div class="cl-item"><strong>"Save Routine" and "Discard"</strong> — plain, unambiguous language. No jargon gatekeeping basic actions.</div>
+          <div class="cl-item"><strong>Field labels in Space Mono, values in Syne</strong> — consistent with the system-wide pattern: mono for metadata, sans for content.</div>
+          <div class="cl-item"><strong>Red full-width CTA</strong> at the bottom — the single action button system applied consistently to builder forms.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE 7: LIVE WORKOUT ── -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+        <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">07</span>
+        <span style="font-size:14px; font-weight:700; color:var(--white);">Live Workout</span>
+      </div>
+      <div class="changelog-grid">
+        <div class="cl-col before">
+          <p class="cl-col-head">Before</p>
+          <div class="cl-item"><strong>All exercise cards equally weighted</strong> — no visual distinction between the active set and future exercises.</div>
+          <div class="cl-item"><strong>"01 / 4" and "DONE" badges</strong> as separate UI elements — set tracking was spread across the card header and table rows.</div>
+          <div class="cl-item"><strong>Green "DONE" badge</strong> and green "Finish Session" button — two greens with different meanings.</div>
+          <div class="cl-item"><strong>Timer input in the header</strong> buried among four other controls — hard to find during a set.</div>
+        </div>
+        <div class="cl-col after">
+          <p class="cl-col-head">After</p>
+          <div class="cl-item"><strong>Active card full-opacity, upcoming cards dimmed to 45%</strong> — focus is always on the current exercise without hiding future context.</div>
+          <div class="cl-item"><strong>Set progress squares in the card header</strong> — a 4-square row where filled = done, empty = pending. Instantly readable.</div>
+          <div class="cl-item"><strong>Single red "Done" button per set row</strong>, "Finish Session" in the top bar. No colour collision.</div>
+          <div class="cl-item"><strong>Volume counter in the footer</strong> — passive data (total lbs lifted) lives at the bottom, not crowding the action area.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE 8: REST TIMER ── -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+        <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">08</span>
+        <span style="font-size:14px; font-weight:700; color:var(--white);">Rest Timer</span>
+      </div>
+      <div class="changelog-grid">
+        <div class="cl-col before">
+          <p class="cl-col-head">Before</p>
+          <div class="cl-item"><strong>Floating corner widget</strong> — the timer appears as a small panel bottom-right. Readable only if standing directly over your phone.</div>
+          <div class="cl-item"><strong>Separate "low time" widget variant</strong> placed next to the normal one in the prototype — confusing duplication.</div>
+          <div class="cl-item"><strong>Exercise content still visible but dimmed</strong> behind the timer widget — split attention during a rest period.</div>
+        </div>
+        <div class="cl-col after">
+          <p class="cl-col-head">After</p>
+          <div class="cl-item"><strong>Full-screen takeover</strong> — the timer is 80px, readable from 3 feet away mid-workout or on a phone propped on a rack.</div>
+          <div class="cl-item"><strong>Progress bar + "Next set" context</strong> — the athlete knows what's coming before the rest ends, no need to navigate away.</div>
+          <div class="cl-item"><strong>Low-time state</strong> is the same screen with the number and bar turning red — one component, two states, no layout change.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE 9: ANALYTICS ── -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+        <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">09</span>
+        <span style="font-size:14px; font-weight:700; color:var(--white);">Analytics</span>
+      </div>
+      <div class="changelog-grid">
+        <div class="cl-col before">
+          <p class="cl-col-head">Before</p>
+          <div class="cl-item"><strong>Green heading "Analytics Engine"</strong> with a trophy icon — tone-deaf for a utility data page.</div>
+          <div class="cl-item"><strong>All-caps day abbreviations and workout names</strong> inside calendar cells — dense and hard to scan.</div>
+          <div class="cl-item"><strong>Sets-volume in green</strong> on the weekly summary table — green used for data values creates a false "success" signal.</div>
+        </div>
+        <div class="cl-col after">
+          <p class="cl-col-head">After</p>
+          <div class="cl-item"><strong>Plain heading "Analytics"</strong> with the date range as eyebrow text — functional, no performance theatre.</div>
+          <div class="cl-item"><strong>Mixed-case day names, large date numerals</strong> — easier to navigate the calendar grid, today highlighted with red accent.</div>
+          <div class="cl-item"><strong>Volume numbers in red</strong> — consistent with the single-accent-colour system. Red signals "the number you care about".</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE 10/11: MODALS ── -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+        <span class="mono" style="font-size:10px; color:var(--red); font-weight:700;">10–11</span>
+        <span style="font-size:14px; font-weight:700; color:var(--white);">Modals (Analytics Detail + Add Exercise)</span>
+      </div>
+      <div class="changelog-grid">
+        <div class="cl-col before">
+          <p class="cl-col-head">Before</p>
+          <div class="cl-item"><strong>4px border-radius</strong> on modals — they felt like dialog boxes, not layered sheets.</div>
+          <div class="cl-item"><strong>All-caps modal headers</strong> ("SELECT EXERCISE") at large letter-spacing — aggressive for an overlay.</div>
+          <div class="cl-item"><strong>Search input uppercase placeholder</strong> "SEARCH / ADD CUSTOM EXERCISE…" — shouting at the user.</div>
+          <div class="cl-item"><strong>No search icon</strong> on the Add Exercise input — the input purpose relies entirely on placeholder text.</div>
+          <div class="cl-item"><strong>Green accent-color on checkbox</strong> — the only remaining green after the Forge Crimson theme was applied, inconsistent.</div>
+        </div>
+        <div class="cl-col after">
+          <p class="cl-col-head">After</p>
+          <div class="cl-item"><strong>12px border-radius</strong> on modals — the increased corner radius distinguishes them clearly as a floating layer above the page.</div>
+          <div class="cl-item"><strong>Sentence case modal headers</strong> ("Add Exercise") — calm, professional, consistent with the rest of the app.</div>
+          <div class="cl-item"><strong>Sentence case placeholder</strong> "Search exercises…" — natural language, not a command.</div>
+          <div class="cl-item"><strong>Search icon inside the input field</strong> — the input is visually self-describing without relying on placeholder text.</div>
+          <div class="cl-item"><strong>Red accent-color on checkbox</strong> — consistent with the single-accent system throughout the app.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer note -->
+    <div style="margin-top:32px; padding:20px 24px; background:var(--red-dim); border:1px solid rgba(192,57,43,0.2); border-radius:var(--radius);">
+      <p style="font-size:12px; color:var(--text-2); line-height:1.7; margin:0;">
+        <strong style="color:var(--white);">Design principle throughout:</strong> Every change was driven by one question — does this help the user lift more, track better, or think less? Nothing was changed for aesthetic novelty alone. The crimson red accent, the tight icon rail, the full-screen rest timer, and the weight-scale typography all serve focus, not decoration.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+  lucide.createIcons();
+</script>
+
+</body>
+</html>

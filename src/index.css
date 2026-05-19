@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600;1,700&family=Barlow:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+/* ── LIGHT MODE (default) ── */
+[data-theme="light"] {
+  --canvas:       #ffffff;
+  --surface:      #f5f5f5;
+  --surface-2:    #ebebeb;
+  --ink:          #111111;
+  --charcoal:     #39393b;
+  --ash:          #4b4b4d;
+  --mute:         #707072;
+  --stone:        #9e9ea0;
+  --hairline:     #e5e5e5;
+  --hairline-2:   #cacacb;
+  --action:       #d30005;
+  --action-hover: #a80004;
+  --pill-bg:      #f0f0f0;
+  --pill-text:    #39393b;
+
+  /* backward-compat aliases (LiveWorkout, etc.) */
+  --bg:       var(--canvas);
+  --bg-1:     var(--surface);
+  --bg-2:     var(--surface-2);
+  --bg-3:     #ddd;
+  --border:   var(--hairline);
+  --border-2: var(--hairline-2);
+  --red:      var(--action);
+  --red-dim:  #ffe5e5;
+  --red-hi:   var(--action-hover);
+  --muted:    var(--mute);
+  --dim:      var(--stone);
+  --text:     var(--ink);
+  --text-2:   var(--charcoal);
+  --white:    var(--ink);
+  --radius:    8px;
+  --radius-sm: 6px;
+}
+
+/* ── DARK MODE ── */
+[data-theme="dark"] {
+  --canvas:       #111111;
+  --surface:      #1c1c1c;
+  --surface-2:    #282828;
+  --ink:          #ffffff;
+  --charcoal:     #e5e5e5;
+  --ash:          #cacacb;
+  --mute:         #9e9ea0;
+  --stone:        #707072;
+  --hairline:     #2a2a2a;
+  --hairline-2:   #3a3a3a;
+  --action:       #ff3b30;
+  --action-hover: #ff6059;
+  --pill-bg:      #2a2a2a;
+  --pill-text:    #cacacb;
+
+  /* backward-compat aliases */
+  --bg:       var(--canvas);
+  --bg-1:     var(--surface);
+  --bg-2:     var(--surface-2);
+  --bg-3:     #333;
+  --border:   var(--hairline);
+  --border-2: var(--hairline-2);
+  --red:      var(--action);
+  --red-dim:  #2a0a08;
+  --red-hi:   var(--action-hover);
+  --muted:    var(--mute);
+  --dim:      var(--stone);
+  --text:     var(--ink);
+  --text-2:   var(--ash);
+  --white:    var(--ink);
+  --radius:    8px;
+  --radius-sm: 6px;
+}
+
+@theme {
+  --font-sans: 'Barlow', sans-serif;
+  --font-mono: 'Barlow Condensed', sans-serif;
+}
+
+/* ── BASE ── */
+html, body {
+  background: var(--canvas);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--hairline-2); border-radius: 2px; }
+
+/* ── ANIMATIONS ── */
+@keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }

@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forge.AI — App Layout Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; margin: 0; background: #0C0C0C; color: #E0E0E0; }
+
+    /* Page navigation */
+    .page-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: #111; border-bottom: 1px solid #222; padding: 10px 20px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .page-nav button { padding: 6px 14px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid #333; background: transparent; color: #999; cursor: pointer; border-radius: 4px; transition: all 0.15s; }
+    .page-nav button:hover { border-color: #666; color: #fff; }
+    .page-nav button.active { background: #10b981; color: #000; border-color: #10b981; }
+    .page-nav .title { font-size: 11px; font-weight: 900; color: #fff; letter-spacing: 0.05em; margin-right: 16px; display: flex; align-items: center; gap: 6px; }
+    .page-nav .title span { color: #10b981; }
+
+    .page-section { display: none; min-height: 100vh; padding-top: 52px; }
+    .page-section.active { display: block; }
+
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0C0C0C; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    /* Desktop sidebar layout */
+    .app-layout { display: flex; flex-direction: column; }
+    @media (min-width: 640px) { .app-layout { flex-direction: row; } }
+
+    .sidebar { flex-shrink: 0; border-bottom: 1px solid #222; display: flex; flex-direction: column; background: #0C0C0C; }
+    @media (min-width: 640px) { .sidebar { width: 256px; border-bottom: none; border-right: 1px solid #222; } }
+
+    .main-content { flex: 1; overflow-y: auto; background: #222; }
+    .main-inner { min-height: 100%; background: #0C0C0C; padding: 16px; }
+    @media (min-width: 640px) { .main-inner { padding: 32px; } }
+    .main-inner-content { max-width: 56rem; margin: 0 auto; }
+
+    /* Tab styles */
+    .tab-active { background: #18181b; border-left: 2px solid #10b981; border-radius: 0 4px 4px 0; }
+    @media (max-width: 639px) { .tab-active { border-left: none; border-bottom: 2px solid #10b981; border-radius: 0; } }
+    .tab-inactive:hover { background: #18181b; border-radius: 4px; }
+    @media (max-width: 639px) { .tab-inactive:hover { border-radius: 0; } }
+  </style>
+</head>
+<body>
+
+<!-- ==================== PAGE NAVIGATION ==================== -->
+<div class="page-nav">
+  <div class="title"><span>⟐</span> Forge.AI Layout Preview</div>
+  <button class="active" onclick="showPage('login')">Login</button>
+  <button onclick="showPage('routines')">My Routines</button>
+  <button onclick="showPage('routines-empty')">Routines (Empty)</button>
+  <button onclick="showPage('generator')">AI Generator</button>
+  <button onclick="showPage('generator-result')">AI Generator (Result)</button>
+  <button onclick="showPage('custom-builder')">Custom Builder</button>
+  <button onclick="showPage('live-workout')">Live Workout</button>
+  <button onclick="showPage('live-workout-timer')">Live Workout (Timer)</button>
+  <button onclick="showPage('analytics')">Analytics</button>
+  <button onclick="showPage('analytics-modal')">Analytics (Modal)</button>
+  <button onclick="showPage('add-exercise-modal')">Add Exercise Modal</button>
+</div>
+
+<script>
+function showPage(id) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.page-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+
+
+<!-- ==================== PAGE 1: LOGIN ==================== -->
+<div id="login" class="page-section active">
+  <div style="min-height: calc(100vh - 52px); background: #0C0C0C; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: rgba(24,24,27,0.3); border: 1px solid #222; padding: 32px; border-radius: 4px; min-width: 300px; width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+      <!-- Logo -->
+      <div style="width: 48px; height: 48px; border: 1px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; background: #0C0C0C;">
+        <i data-lucide="dumbbell" style="width: 24px; height: 24px; color: #10b981;"></i>
+      </div>
+      <h1 style="font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #fff; margin: 0 0 8px 0;">Forge.AI</h1>
+      <p style="font-size: 10px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; color: #71717a; letter-spacing: 0.2em; margin: 0 0 32px 0;">v2.4.0 High-Performance</p>
+      <button style="width: 100%; background: #fff; color: #000; font-weight: 900; text-transform: uppercase; font-size: 11px; padding: 12px 24px; border: none; border-radius: 4px; letter-spacing: 0.15em; cursor: pointer;">
+        Initialize Session
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== PAGE 2: MY ROUTINES ==================== -->
+<div id="routines" class="page-section">
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div style="padding: 24px; border-bottom: 1px solid #222;">
+        <h1 style="font-size: 24px; font-weight: 900; letter-spacing: -0.03em; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <i data-lucide="dumbbell" style="width: 24px; height: 24px; color: #10b981;"></i>
+          <span class="hidden sm:inline">Forge.AI</span>
+        </h1>
+        <p class="hidden sm:block" style="font-size: 10px; color: #71717a; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.2em; margin: 4px 0 0 0; text-transform: uppercase;">v2.4.0 High-Performance</p>
+      </div>
+      <nav style="display: flex; flex-direction: row; flex: 1; padding: 16px; gap: 8px; overflow-x: auto;">
+        <div>
+          <p class="hidden sm:block" style="font-size: 10px; font-weight: 700; color: #52525b; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 16px;">Navigation</p>
+          <ul style="display: flex; flex-direction: row; gap: 8px; list-style: none; margin: 0; padding: 0;">
+            <li class="tab-active" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="calendar" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">My Routines</span>
+            </li>
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px; transition: background 0.15s;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">AI Generator</span>
+            </li>
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px; transition: background 0.15s;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">Analytics</span>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <!-- User footer -->
+      <div class="hidden sm:flex" style="flex-direction: column; border-top: 1px solid #222; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 8px;">
+          <span>USER: john.doe</span>
+          <i data-lucide="log-out" style="width: 16px; height: 16px; cursor: pointer;"></i>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 9px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #71717a; text-transform: uppercase;">
+          <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;" class="animate-pulse"></span>
+          SYNCED
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="main-inner">
+        <div class="main-inner-content" style="display: flex; flex-direction: column; gap: 24px;">
+          <!-- Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #E0E0E0; margin: 0;">My Routines</h2>
+            <button style="font-size: 9px; color: #34d399; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; background: none; border: none; cursor: pointer;">+ Add Routine</button>
+          </div>
+
+          <!-- Routine Cards Grid -->
+          <div style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+            <!-- Card 1 -->
+            <div style="background: #0C0C0C; border: 1px solid #222; border-radius: 4px; display: flex; flex-direction: column;">
+              <div style="background: #18181b; border-bottom: 1px solid #222; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; position: relative;">
+                <h3 style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; margin: 0; padding-right: 32px;">Push Day — Chest & Triceps</h3>
+                <button style="position: absolute; right: 8px; top: 8px; color: #52525b; background: none; border: none; cursor: pointer; padding: 8px;">
+                  <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                </button>
+              </div>
+              <div style="padding: 16px; flex: 1; border-bottom: 1px solid #18181b;">
+                <p style="font-size: 10px; color: #71717a; font-family: 'JetBrains Mono', monospace; margin: 0 0 12px 0;">6 EXERCISES • CHEST</p>
+                <ul style="list-style: none; padding: 0; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a1a1aa;">
+                  <li style="margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="color: #52525b;">»</span> Barbell Bench Press</li>
+                  <li style="margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="color: #52525b;">»</span> Incline Dumbbell Press</li>
+                  <li style="margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="color: #52525b;">»</span> Cable Flyes</li>
+                  <li style="color: #52525b;">  +3 MORE</li>
+                </ul>
+              </div>
+              <div style="padding: 12px;">
+                <button style="width: 100%; background: #27272a; color: #fff; font-weight: 700; padding: 8px; border: none; border-radius: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; cursor: pointer;">Initiate session</button>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div style="background: #0C0C0C; border: 1px solid #222; border-radius: 4px; display: flex; flex-direction: column;">
+              <div style="background: #18181b; border-bottom: 1px solid #222; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; position: relative;">
+                <h3 style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; margin: 0; padding-right: 32px;">Leg Day — Quad & Hamstring</h3>
+                <button style="position: absolute; right: 8px; top: 8px; color: #52525b; background: none; border: none; cursor: pointer; padding: 8px;">
+                  <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                </button>
+              </div>
+              <div style="padding: 16px; flex: 1; border-bottom: 1px solid #18181b;">
+                <p style="font-size: 10px; color: #71717a; font-family: 'JetBrains Mono', monospace; margin: 0 0 12px 0;">5 EXERCISES • LEGS</p>
+                <ul style="list-style: none; padding: 0; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a1a1aa;">
+                  <li style="margin-bottom: 4px;"><span style="color: #52525b;">»</span> Barbell Back Squat</li>
+                  <li style="margin-bottom: 4px;"><span style="color: #52525b;">»</span> Romanian Deadlift</li>
+                  <li style="margin-bottom: 4px;"><span style="color: #52525b;">»</span> Leg Press</li>
+                  <li style="color: #52525b;">  +2 MORE</li>
+                </ul>
+              </div>
+              <div style="padding: 12px;">
+                <button style="width: 100%; background: #27272a; color: #fff; font-weight: 700; padding: 8px; border: none; border-radius: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; cursor: pointer;">Initiate session</button>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div style="background: #0C0C0C; border: 1px solid #222; border-radius: 4px; display: flex; flex-direction: column;">
+              <div style="background: #18181b; border-bottom: 1px solid #222; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; position: relative;">
+                <h3 style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; margin: 0; padding-right: 32px;">Upper Power A</h3>
+                <button style="position: absolute; right: 8px; top: 8px; color: #52525b; background: none; border: none; cursor: pointer; padding: 8px;">
+                  <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                </button>
+              </div>
+              <div style="padding: 16px; flex: 1; border-bottom: 1px solid #18181b;">
+                <p style="font-size: 10px; color: #71717a; font-family: 'JetBrains Mono', monospace; margin: 0 0 12px 0;">4 EXERCISES • UPPER</p>
+                <ul style="list-style: none; padding: 0; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a1a1aa;">
+                  <li style="margin-bottom: 4px;"><span style="color: #52525b;">»</span> Overhead Press</li>
+                  <li style="margin-bottom: 4px;"><span style="color: #52525b;">»</span> Weighted Pull-Up</li>
+                  <li style="margin-bottom: 4px;"><span style="color: #52525b;">»</span> Barbell Row</li>
+                  <li style="color: #52525b;">  +1 MORE</li>
+                </ul>
+              </div>
+              <div style="padding: 12px;">
+                <button style="width: 100%; background: #27272a; color: #fff; font-weight: 700; padding: 8px; border: none; border-radius: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; cursor: pointer;">Initiate session</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== PAGE 3: ROUTINES (EMPTY STATE) ==================== -->
+<div id="routines-empty" class="page-section">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div style="padding: 24px; border-bottom: 1px solid #222;">
+        <h1 style="font-size: 24px; font-weight: 900; letter-spacing: -0.03em; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <i data-lucide="dumbbell" style="width: 24px; height: 24px; color: #10b981;"></i>
+          <span class="hidden sm:inline">Forge.AI</span>
+        </h1>
+        <p class="hidden sm:block" style="font-size: 10px; color: #71717a; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.2em; margin: 4px 0 0 0; text-transform: uppercase;">v2.4.0 High-Performance</p>
+      </div>
+      <nav style="display: flex; flex-direction: row; flex: 1; padding: 16px; gap: 8px;">
+        <div>
+          <p class="hidden sm:block" style="font-size: 10px; font-weight: 700; color: #52525b; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 16px;">Navigation</p>
+          <ul style="display: flex; flex-direction: row; gap: 8px; list-style: none; margin: 0; padding: 0;">
+            <li class="tab-active" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="calendar" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">My Routines</span>
+            </li>
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">AI Generator</span>
+            </li>
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">Analytics</span>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div class="hidden sm:flex" style="flex-direction: column; border-top: 1px solid #222; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 8px;">
+          <span>USER: john.doe</span>
+          <i data-lucide="log-out" style="width: 16px; height: 16px; cursor: pointer;"></i>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 9px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #71717a; text-transform: uppercase;">
+          <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;" class="animate-pulse"></span>
+          SYNCED
+        </div>
+      </div>
+    </aside>
+    <div class="main-content">
+      <div class="main-inner">
+        <div class="main-inner-content" style="display: flex; flex-direction: column; gap: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #E0E0E0; margin: 0;">My Routines</h2>
+            <button style="font-size: 9px; color: #34d399; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; background: none; border: none; cursor: pointer;">+ Add Routine</button>
+          </div>
+          <!-- Empty state -->
+          <div style="background: #0C0C0C; border: 1px solid #222; border-radius: 4px; padding: 32px; text-align: center; color: #71717a; font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em;">
+            No routines found. Generate one with AI or cascade custom structure.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== PAGE 4: AI GENERATOR ==================== -->
+<div id="generator" class="page-section">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div style="padding: 24px; border-bottom: 1px solid #222;">
+        <h1 style="font-size: 24px; font-weight: 900; letter-spacing: -0.03em; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <i data-lucide="dumbbell" style="width: 24px; height: 24px; color: #10b981;"></i>
+          <span class="hidden sm:inline">Forge.AI</span>
+        </h1>
+        <p class="hidden sm:block" style="font-size: 10px; color: #71717a; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.2em; margin: 4px 0 0 0; text-transform: uppercase;">v2.4.0 High-Performance</p>
+      </div>
+      <nav style="display: flex; flex-direction: row; flex: 1; padding: 16px; gap: 8px;">
+        <div>
+          <p class="hidden sm:block" style="font-size: 10px; font-weight: 700; color: #52525b; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 16px;">Navigation</p>
+          <ul style="display: flex; flex-direction: row; gap: 8px; list-style: none; margin: 0; padding: 0;">
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="calendar" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">My Routines</span>
+            </li>
+            <li class="tab-active" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">AI Generator</span>
+            </li>
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">Analytics</span>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div class="hidden sm:flex" style="flex-direction: column; border-top: 1px solid #222; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 8px;">
+          <span>USER: john.doe</span>
+          <i data-lucide="log-out" style="width: 16px; height: 16px; cursor: pointer;"></i>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 9px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #71717a; text-transform: uppercase;">
+          <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;" class="animate-pulse"></span>
+          SYNCED
+        </div>
+      </div>
+    </aside>
+    <div class="main-content">
+      <div class="main-inner">
+        <div class="main-inner-content" style="display: flex; flex-direction: column; gap: 24px;">
+          <div style="background: #0C0C0C; border: 1px solid #222; border-radius: 4px; padding: 24px;">
+            <h2 style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #34d399; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="bot" style="width: 16px; height: 16px;"></i> Forge AI Generator
+            </h2>
+            <p style="font-size: 10px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; color: #71717a; letter-spacing: 0.15em; margin: 0 0 24px 0; border-bottom: 1px solid #27272a; padding-bottom: 16px;">
+              Define target parameters. Generation engine will construct protocol.
+            </p>
+            <div style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 9px; color: #71717a; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Target Muscle Group</label>
+                <input type="text" placeholder="e.g. CHEST, LEGS, HYPERTROPHY..." style="width: 100%; background: transparent; border: 1px solid #333; border-radius: 4px; padding: 8px 12px; color: #fff; outline: none; font-family: 'JetBrains Mono', monospace; font-size: 12px;" />
+              </div>
+              <button style="background: #fff; color: #000; font-weight: 900; text-transform: uppercase; font-size: 11px; height: 34px; padding: 0 24px; border: none; border-radius: 4px; letter-spacing: 0.15em; cursor: pointer; white-space: nowrap;">
+                Generate Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== PAGE 5: AI GENERATOR (WITH RESULT) ==================== -->
+<div id="generator-result" class="page-section">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div style="padding: 24px; border-bottom: 1px solid #222;">
+        <h1 style="font-size: 24px; font-weight: 900; letter-spacing: -0.03em; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <i data-lucide="dumbbell" style="width: 24px; height: 24px; color: #10b981;"></i>
+          <span class="hidden sm:inline">Forge.AI</span>
+        </h1>
+        <p class="hidden sm:block" style="font-size: 10px; color: #71717a; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.2em; margin: 4px 0 0 0; text-transform: uppercase;">v2.4.0 High-Performance</p>
+      </div>
+      <nav style="display: flex; flex-direction: row; flex: 1; padding: 16px; gap: 8px;">
+        <div>
+          <p class="hidden sm:block" style="font-size: 10px; font-weight: 700; color: #52525b; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 16px;">Navigation</p>
+          <ul style="display: flex; flex-direction: row; gap: 8px; list-style: none; margin: 0; padding: 0;">
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="calendar" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">My Routines</span>
+            </li>
+            <li class="tab-active" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">AI Generator</span>
+            </li>
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">Analytics</span>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div class="hidden sm:flex" style="flex-direction: column; border-top: 1px solid #222; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 8px;">
+          <span>USER: john.doe</span>
+          <i data-lucide="log-out" style="width: 16px; height: 16px; cursor: pointer;"></i>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 9px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #71717a; text-transform: uppercase;">
+          <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;" class="animate-pulse"></span>
+          SYNCED
+        </div>
+      </div>
+    </aside>
+    <div class="main-content">
+      <div class="main-inner">
+        <div class="main-inner-content" style="display: flex; flex-direction: column; gap: 24px;">
+          <!-- Input card -->
+          <div style="background: #0C0C0C; border: 1px solid #222; border-radius: 4px; padding: 24px;">
+            <h2 style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #34d399; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="bot" style="width: 16px; height: 16px;"></i> Forge AI Generator
+            </h2>
+            <p style="font-size: 10px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; color: #71717a; letter-spacing: 0.15em; margin: 0 0 24px 0; border-bottom: 1px solid #27272a; padding-bottom: 16px;">
+              Define target parameters. Generation engine will construct protocol.
+            </p>
+            <div style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 9px; color: #71717a; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Target Muscle Group</label>
+                <input type="text" value="CHEST" style="width: 100%; background: transparent; border: 1px solid #10b981; border-radius: 4px; padding: 8px 12px; color: #fff; outline: none; font-family: 'JetBrains Mono', monospace; font-size: 12px;" />
+              </div>
+              <button style="background: #fff; color: #000; font-weight: 900; text-transform: uppercase; font-size: 11px; height: 34px; padding: 0 24px; border: none; border-radius: 4px; letter-spacing: 0.15em; cursor: pointer; white-space: nowrap;">
+                Generate Plan
+              </button>
+            </div>
+          </div>
+
+          <!-- Generated Result -->
+          <div style="background: #0C0C0C; border: 1px solid #222; border-radius: 4px; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #222;">
+              <h3 style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #E0E0E0; margin: 0;">Chest Destroyer Protocol</h3>
+              <button style="font-size: 9px; color: #34d399; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px;">+ Save Draft</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+              <!-- Exercise 1 -->
+              <div style="border: 1px solid #222; border-radius: 4px; overflow: hidden; background: rgba(24,24,27,0.3);">
+                <div style="background: #18181b; padding: 8px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center;">
+                  <h3 style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; margin: 0;">01. Barbell Bench Press</h3>
+                  <span style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">4x8</span>
+                </div>
+                <div style="padding: 16px;">
+                  <p style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #a1a1aa; margin: 0 0 8px 0;">
+                    <span style="color: #10b981; font-weight: 700;">»</span> Keep shoulder blades retracted and depressed throughout the movement
+                  </p>
+                  <p style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase; margin: 0;">Suggested Load: 135 LBS</p>
+                </div>
+              </div>
+              <!-- Exercise 2 -->
+              <div style="border: 1px solid #222; border-radius: 4px; overflow: hidden; background: rgba(24,24,27,0.3);">
+                <div style="background: #18181b; padding: 8px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center;">
+                  <h3 style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; margin: 0;">02. Incline Dumbbell Press</h3>
+                  <span style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">3x10</span>
+                </div>
+                <div style="padding: 16px;">
+                  <p style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #a1a1aa; margin: 0 0 8px 0;">
+                    <span style="color: #10b981; font-weight: 700;">»</span> Set bench to 30-45 degrees for optimal upper chest activation
+                  </p>
+                  <p style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase; margin: 0;">Suggested Load: 50 LBS</p>
+                </div>
+              </div>
+              <!-- Exercise 3 -->
+              <div style="border: 1px solid #222; border-radius: 4px; overflow: hidden; background: rgba(24,24,27,0.3);">
+                <div style="background: #18181b; padding: 8px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center;">
+                  <h3 style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; margin: 0;">03. Cable Crossover</h3>
+                  <span style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">3x12</span>
+                </div>
+                <div style="padding: 16px;">
+                  <p style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #a1a1aa; margin: 0 0 8px 0;">
+                    <span style="color: #10b981; font-weight: 700;">»</span> Focus on the squeeze at peak contraction for maximum mind-muscle connection
+                  </p>
+                  <p style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase; margin: 0;">Suggested Load: 30 LBS</p>
+                </div>
+              </div>
+              <!-- Exercise 4 -->
+              <div style="border: 1px solid #222; border-radius: 4px; overflow: hidden; background: rgba(24,24,27,0.3);">
+                <div style="background: #18181b; padding: 8px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center;">
+                  <h3 style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; margin: 0;">04. Dips (Weighted)</h3>
+                  <span style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">3x10</span>
+                </div>
+                <div style="padding: 16px;">
+                  <p style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #a1a1aa; margin: 0 0 8px 0;">
+                    <span style="color: #10b981; font-weight: 700;">»</span> Lean forward slightly to emphasize chest over triceps
+                  </p>
+                  <p style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase; margin: 0;">Suggested Load: 25 LBS</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== PAGE 6: CUSTOM ROUTINE BUILDER ==================== -->
+<div id="custom-builder" class="page-section">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div style="padding: 24px; border-bottom: 1px solid #222;">
+        <h1 style="font-size: 24px; font-weight: 900; letter-spacing: -0.03em; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <i data-lucide="dumbbell" style="width: 24px; height: 24px; color: #10b981;"></i>
+          <span class="hidden sm:inline">Forge.AI</span>
+        </h1>
+        <p class="hidden sm:block" style="font-size: 10px; color: #71717a; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.2em; margin: 4px 0 0 0; text-transform: uppercase;">v2.4.0 High-Performance</p>
+      </div>
+      <nav style="display: flex; flex-direction: row; flex: 1; padding: 16px; gap: 8px;">
+        <div>
+          <ul style="display: flex; flex-direction: row; gap: 8px; list-style: none; margin: 0; padding: 0;">
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="calendar" style="width: 16px; height: 16px;"></i>
+            </li>
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+            </li>
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div class="hidden sm:flex" style="flex-direction: column; border-top: 1px solid #222; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 8px;">
+          <span>USER: john.doe</span>
+          <i data-lucide="log-out" style="width: 16px; height: 16px; cursor: pointer;"></i>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 9px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #71717a; text-transform: uppercase;">
+          <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;" class="animate-pulse"></span>
+          SYNCED
+        </div>
+      </div>
+    </aside>
+    <div class="main-content">
+      <div class="main-inner">
+        <div class="main-inner-content" style="max-width: 42rem;">
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            <!-- Header -->
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222; padding-bottom: 16px;">
+              <h2 style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #E0E0E0; margin: 0;">Configure Routine</h2>
+              <button style="font-size: 10px; text-transform: uppercase; font-weight: 700; color: #71717a; background: none; border: none; cursor: pointer;">Abort</button>
+            </div>
+
+            <!-- Form -->
+            <div style="background: #0C0C0C; border: 1px solid #222; border-radius: 4px; padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+              <!-- Identifier -->
+              <div>
+                <label style="font-size: 9px; color: #71717a; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Identifier</label>
+                <input type="text" placeholder="e.g. UPPER_POWER_A" style="width: 100%; background: transparent; border: 1px solid #27272a; border-radius: 4px; padding: 8px 12px; color: #fff; font-size: 12px; outline: none; font-family: 'JetBrains Mono', monospace;" />
+              </div>
+
+              <!-- Protocol Structure -->
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 8px;">
+                  <label style="font-size: 9px; color: #71717a; text-transform: uppercase; font-weight: 700;">Protocol Structure</label>
+                  <div style="display: flex; gap: 16px;">
+                    <button style="font-size: 9px; color: #34d399; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; background: none; border: none; cursor: pointer;">+ Append Strength</button>
+                    <button style="font-size: 9px; color: #34d399; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; background: none; border: none; cursor: pointer;">+ Append Cardio</button>
+                  </div>
+                </div>
+
+                <!-- Exercise rows -->
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                  <!-- Strength row 1 -->
+                  <div style="background: rgba(24,24,27,0.5); border: 1px solid #27272a; border-radius: 4px; padding: 12px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 150px;">
+                      <label style="display: block; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 4px;">TARGET</label>
+                      <input type="text" value="Bench Press" style="width: 100%; background: transparent; border-bottom: 1px solid #3f3f46; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 0; color: #fff; outline: none;" />
+                    </div>
+                    <div style="width: 64px;">
+                      <label style="display: block; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 4px;">SETS</label>
+                      <input type="number" value="4" style="width: 100%; background: transparent; border-bottom: 1px solid #3f3f46; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 0; color: #fff; outline: none; text-align: center;" />
+                    </div>
+                    <div style="width: 64px;">
+                      <label style="display: block; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 4px;">REPS</label>
+                      <input type="number" value="8" style="width: 100%; background: transparent; border-bottom: 1px solid #3f3f46; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 0; color: #fff; outline: none; text-align: center;" />
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: center; width: 32px;">
+                      <button style="color: #52525b; background: none; border: none; cursor: pointer; padding: 4px;">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <!-- Strength row 2 -->
+                  <div style="background: rgba(24,24,27,0.5); border: 1px solid #27272a; border-radius: 4px; padding: 12px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 150px;">
+                      <label style="display: block; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 4px;">TARGET</label>
+                      <input type="text" value="Overhead Press" style="width: 100%; background: transparent; border-bottom: 1px solid #3f3f46; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 0; color: #fff; outline: none;" />
+                    </div>
+                    <div style="width: 64px;">
+                      <label style="display: block; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 4px;">SETS</label>
+                      <input type="number" value="3" style="width: 100%; background: transparent; border-bottom: 1px solid #3f3f46; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 0; color: #fff; outline: none; text-align: center;" />
+                    </div>
+                    <div style="width: 64px;">
+                      <label style="display: block; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 4px;">REPS</label>
+                      <input type="number" value="10" style="width: 100%; background: transparent; border-bottom: 1px solid #3f3f46; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 0; color: #fff; outline: none; text-align: center;" />
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: center; width: 32px;">
+                      <button style="color: #52525b; background: none; border: none; cursor: pointer; padding: 4px;">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <!-- Cardio row -->
+                  <div style="background: rgba(24,24,27,0.5); border: 1px solid #27272a; border-radius: 4px; padding: 12px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 150px;">
+                      <label style="display: block; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 4px;">CARDIO ACTIVITY</label>
+                      <input type="text" value="Treadmill Run" style="width: 100%; background: transparent; border-bottom: 1px solid #3f3f46; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 0; color: #fff; outline: none;" />
+                    </div>
+                    <div style="width: 64px;">
+                      <label style="display: block; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 4px;">MIN</label>
+                      <input type="number" value="30" style="width: 100%; background: transparent; border-bottom: 1px solid #3f3f46; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 0; color: #fff; outline: none; text-align: center;" />
+                    </div>
+                    <div style="width: 64px;">
+                      <label style="display: block; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 4px;">DIST</label>
+                      <input type="number" value="3" style="width: 100%; background: transparent; border-bottom: 1px solid #3f3f46; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 0; color: #fff; outline: none; text-align: center;" />
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: center; width: 32px;">
+                      <button style="color: #52525b; background: none; border: none; cursor: pointer; padding: 4px;">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Save button -->
+              <button style="width: 100%; margin-top: 16px; padding: 12px; background: #fff; color: #000; font-weight: 900; text-transform: uppercase; font-size: 11px; border: none; border-radius: 4px; letter-spacing: 0.15em; cursor: pointer;">
+                Commit Sequence
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== PAGE 7: LIVE WORKOUT ==================== -->
+<div id="live-workout" class="page-section">
+  <div style="display: flex; flex-direction: column; min-height: calc(100vh - 52px); background: #0C0C0C;">
+    <!-- Header -->
+    <header style="height: 64px; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: #0C0C0C; position: sticky; top: 52px; z-index: 10;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <span style="height: 8px; width: 8px; background: #10b981; border-radius: 50%; display: inline-block;" class="animate-pulse"></span>
+        <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #E0E0E0;">Push Day — Chest & Triceps</span>
+      </div>
+      <div style="display: flex; gap: 16px; align-items: center;">
+        <!-- Rest timer config -->
+        <div style="display: flex; align-items: center; gap: 8px; background: #1A1A1A; border: 1px solid #222; border-radius: 4px; padding: 4px 12px;">
+          <i data-lucide="timer" style="width: 14px; height: 14px; color: rgba(16,185,129,0.7);"></i>
+          <input type="number" value="90" style="background: transparent; color: #fff; font-size: 11px; font-weight: 700; border: none; outline: none; width: 32px; text-align: right; font-family: inherit;" />
+          <span style="font-size: 10px; font-weight: 900; color: #71717a; letter-spacing: 0.15em; text-transform: uppercase;">SEC</span>
+        </div>
+        <!-- Unit toggle -->
+        <div style="display: flex; background: #222; border-radius: 4px; overflow: hidden;">
+          <button style="padding: 6px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; background: #3f3f46; color: #fff; border: none; cursor: pointer;">LBS</button>
+          <button style="padding: 6px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; background: transparent; color: #71717a; border: none; cursor: pointer;">KGS</button>
+        </div>
+        <button style="padding: 6px 16px; border: 1px solid #333; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; background: transparent; color: #E0E0E0; cursor: pointer;">Abort</button>
+        <button style="padding: 6px 16px; background: #059669; color: #fff; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer;">Finish Session</button>
+      </div>
+    </header>
+
+    <!-- Exercise cards area -->
+    <div style="flex: 1; padding: 16px; background: #222;">
+      <div style="display: grid; grid-template-columns: 1fr; gap: 16px; max-width: 56rem; margin: 0 auto;">
+        <!-- Exercise 1: Strength with sets -->
+        <div style="border: 1px solid #222; border-radius: 4px; overflow: hidden; background: #0C0C0C;">
+          <div style="background: #18181b; padding: 12px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0;">01.</span>
+              <span style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0;">Barbell Bench Press</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <button style="padding: 4px; color: #71717a; background: none; border: none; cursor: pointer;"><i data-lucide="chevron-up" style="width: 14px; height: 14px;"></i></button>
+                <button style="padding: 4px; color: #71717a; background: none; border: none; cursor: pointer;"><i data-lucide="chevron-down" style="width: 14px; height: 14px;"></i></button>
+                <button style="padding: 6px; margin-left: 4px; background: rgba(127,29,29,0.2); color: #ef4444; border: none; border-radius: 4px; cursor: pointer;"><i data-lucide="trash-2" style="width: 12px; height: 12px;"></i></button>
+              </div>
+              <span style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">4 SETS</span>
+            </div>
+          </div>
+          <div style="padding: 16px; overflow-x: auto;">
+            <table style="width: 100%; text-align: left; font-size: 11px; border-collapse: collapse;">
+              <thead style="color: #71717a; font-family: 'JetBrains Mono', monospace;">
+                <tr>
+                  <th style="padding-bottom: 12px; padding-left: 8px; padding-right: 8px; font-weight: normal;">SET</th>
+                  <th style="padding-bottom: 12px; padding-left: 8px; padding-right: 8px; font-weight: normal; text-transform: uppercase;">LBS</th>
+                  <th style="padding-bottom: 12px; padding-left: 8px; padding-right: 8px; font-weight: normal;">REPS</th>
+                  <th style="padding-bottom: 12px; padding-left: 8px; padding-right: 8px; font-weight: normal; text-align: right;">STATUS</th>
+                  <th style="padding-bottom: 12px; padding-left: 8px; padding-right: 8px; font-weight: normal; width: 32px;"></th>
+                </tr>
+              </thead>
+              <tbody style="font-family: 'JetBrains Mono', monospace;">
+                <tr style="border-bottom: 1px solid rgba(39,39,42,0.5);">
+                  <td style="padding: 12px 8px; color: #a1a1aa; vertical-align: top;">
+                    <div style="padding-top: 4px;">01 / 4</div>
+                    <div style="font-size: 9px; color: #52525b; margin-top: 4px; white-space: nowrap;">Prev: 135lbs x 8</div>
+                  </td>
+                  <td style="padding: 12px 8px; vertical-align: top;"><input type="number" value="135" style="background: transparent; border-bottom: 1px solid #3f3f46; width: 64px; outline: none; color: #fff; padding: 4px; font-family: 'JetBrains Mono', monospace;" /></td>
+                  <td style="padding: 12px 8px; vertical-align: top;"><input type="number" value="8" style="background: transparent; border-bottom: 1px solid #3f3f46; width: 64px; outline: none; color: #fff; padding: 4px; font-family: 'JetBrains Mono', monospace;" /></td>
+                  <td style="padding: 12px 8px; text-align: right; vertical-align: top;">
+                    <button style="padding: 4px 12px; font-size: 10px; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(6,78,59,0.2); color: #10b981; border: 1px solid rgba(6,78,59,0.5); cursor: pointer;">DONE</button>
+                  </td>
+                  <td style="padding: 12px 8px; text-align: right; vertical-align: top;">
+                    <button style="color: #52525b; background: none; border: none; cursor: pointer;"><i data-lucide="x" style="width: 14px; height: 14px;"></i></button>
+                  </td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(39,39,42,0.5);">
+                  <td style="padding: 12px 8px; color: #a1a1aa; vertical-align: top;">
+                    <div style="padding-top: 4px;">02 / 4</div>
+                    <div style="font-size: 9px; color: #52525b; margin-top: 4px; white-space: nowrap;">Prev: 135lbs x 8</div>
+                  </td>
+                  <td style="padding: 12px 8px; vertical-align: top;"><input type="number" value="135" style="background: transparent; border-bottom: 1px solid #3f3f46; width: 64px; outline: none; color: #fff; padding: 4px; font-family: 'JetBrains Mono', monospace;" /></td>
+                  <td style="padding: 12px 8px; vertical-align: top;"><input type="number" value="8" style="background: transparent; border-bottom: 1px solid #3f3f46; width: 64px; outline: none; color: #fff; padding: 4px; font-family: 'JetBrains Mono', monospace;" /></td>
+                  <td style="padding: 12px 8px; text-align: right; vertical-align: top;">
+                    <button style="padding: 4px 12px; font-size: 10px; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.1em; background: transparent; color: #71717a; border: 1px solid #27272a; cursor: pointer;">PENDING</button>
+                  </td>
+                  <td style="padding: 12px 8px; text-align: right; vertical-align: top;">
+                    <button style="color: #52525b; background: none; border: none; cursor: pointer;"><i data-lucide="x" style="width: 14px; height: 14px;"></i></button>
+                  </td>
+                </tr>
+                <tr style="border-bottom: 1px solid rgba(39,39,42,0.5);">
+                  <td style="padding: 12px 8px; color: #a1a1aa; vertical-align: top;">
+                    <div style="padding-top: 4px;">03 / 4</div>
+                  </td>
+                  <td style="padding: 12px 8px; vertical-align: top;"><input type="number" value="0" style="background: transparent; border-bottom: 1px solid #3f3f46; width: 64px; outline: none; color: #fff; padding: 4px; font-family: 'JetBrains Mono', monospace;" /></td>
+                  <td style="padding: 12px 8px; vertical-align: top;"><input type="number" value="8" style="background: transparent; border-bottom: 1px solid #3f3f46; width: 64px; outline: none; color: #fff; padding: 4px; font-family: 'JetBrains Mono', monospace;" /></td>
+                  <td style="padding: 12px 8px; text-align: right; vertical-align: top;">
+                    <button style="padding: 4px 12px; font-size: 10px; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.1em; background: transparent; color: #71717a; border: 1px solid #27272a; cursor: pointer;">PENDING</button>
+                  </td>
+                  <td style="padding: 12px 8px; text-align: right; vertical-align: top;">
+                    <button style="color: #52525b; background: none; border: none; cursor: pointer;"><i data-lucide="x" style="width: 14px; height: 14px;"></i></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 8px; color: #a1a1aa; vertical-align: top;">
+                    <div style="padding-top: 4px;">04 / 4</div>
+                  </td>
+                  <td style="padding: 12px 8px; vertical-align: top;"><input type="number" value="0" style="background: transparent; border-bottom: 1px solid #3f3f46; width: 64px; outline: none; color: #fff; padding: 4px; font-family: 'JetBrains Mono', monospace;" /></td>
+                  <td style="padding: 12px 8px; vertical-align: top;"><input type="number" value="8" style="background: transparent; border-bottom: 1px solid #3f3f46; width: 64px; outline: none; color: #fff; padding: 4px; font-family: 'JetBrains Mono', monospace;" /></td>
+                  <td style="padding: 12px 8px; text-align: right; vertical-align: top;">
+                    <button style="padding: 4px 12px; font-size: 10px; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.1em; background: transparent; color: #71717a; border: 1px solid #27272a; cursor: pointer;">PENDING</button>
+                  </td>
+                  <td style="padding: 12px 8px; text-align: right; vertical-align: top;">
+                    <button style="color: #52525b; background: none; border: none; cursor: pointer;"><i data-lucide="x" style="width: 14px; height: 14px;"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button style="flex: 1; padding: 6px; border: 1px dashed #333; color: #71717a; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; background: transparent; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 4px;">
+                <i data-lucide="plus" style="width: 12px; height: 12px;"></i> Add Set
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exercise 2: Cardio -->
+        <div style="border: 1px solid #222; border-radius: 4px; overflow: hidden; background: #0C0C0C;">
+          <div style="background: #18181b; padding: 12px 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0;">02.</span>
+              <span style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0;">Treadmill Run</span>
+            </div>
+            <span style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">CARDIO</span>
+          </div>
+          <div style="padding: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 0; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
+              <div style="display: flex; gap: 16px;">
+                <div>
+                  <div style="color: #71717a; margin-bottom: 4px;">DURATION (MIN)</div>
+                  <input type="number" value="30" style="background: transparent; border-bottom: 1px solid #3f3f46; width: 64px; outline: none; color: #fff; padding: 4px; font-family: 'JetBrains Mono', monospace;" />
+                </div>
+                <div>
+                  <div style="color: #71717a; margin-bottom: 4px;">DISTANCE</div>
+                  <input type="number" value="3" style="background: transparent; border-bottom: 1px solid #3f3f46; width: 64px; outline: none; color: #fff; padding: 4px; font-family: 'JetBrains Mono', monospace;" />
+                </div>
+              </div>
+              <div>
+                <button style="padding: 4px 12px; font-size: 10px; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.1em; background: transparent; color: #71717a; border: 1px solid #27272a; cursor: pointer;">PENDING</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Custom Exercise button -->
+        <button style="width: 100%; padding: 16px; border: 2px dashed #333; color: #666; border-radius: 8px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; background: transparent; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          <i data-lucide="plus" style="width: 16px; height: 16px;"></i> Add Custom Exercise
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer stat bar -->
+    <footer style="height: 40px; border-top: 1px solid #222; background: #0C0C0C; display: flex; align-items: center; padding: 0 24px; justify-content: space-between; font-size: 9px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; color: #71717a;">
+      <div style="display: flex; gap: 24px;">
+        <span>EXERCISES: <span style="color: #fff; font-weight: 700;">2</span></span>
+        <span>COMPLETED SETS: <span style="color: #fff; font-weight: 700;">1 / 4</span></span>
+      </div>
+      <div style="display: flex; gap: 16px;">
+        <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;"></span> ACTIVE</span>
+      </div>
+    </footer>
+  </div>
+</div>
+
+
+<!-- ==================== PAGE 8: LIVE WORKOUT WITH TIMER ==================== -->
+<div id="live-workout-timer" class="page-section">
+  <div style="display: flex; flex-direction: column; min-height: calc(100vh - 52px); background: #0C0C0C; position: relative;">
+    <!-- Header -->
+    <header style="height: 64px; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: #0C0C0C;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <span style="height: 8px; width: 8px; background: #10b981; border-radius: 50%; display: inline-block;" class="animate-pulse"></span>
+        <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #E0E0E0;">Push Day — Chest & Triceps</span>
+      </div>
+      <div style="display: flex; gap: 16px; align-items: center;">
+        <div style="display: flex; background: #222; border-radius: 4px; overflow: hidden;">
+          <button style="padding: 6px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; background: #3f3f46; color: #fff; border: none; cursor: pointer;">LBS</button>
+          <button style="padding: 6px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; background: transparent; color: #71717a; border: none; cursor: pointer;">KGS</button>
+        </div>
+        <button style="padding: 6px 16px; background: #059669; color: #fff; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer;">Finish Session</button>
+      </div>
+    </header>
+
+    <!-- Content area (dimmed to highlight timer) -->
+    <div style="flex: 1; padding: 16px; background: #222; opacity: 0.5;">
+      <div style="max-width: 56rem; margin: 0 auto; text-align: center; padding-top: 60px; color: #52525b; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase;">
+        [ Exercise cards appear here — same as Live Workout page ]
+      </div>
+    </div>
+
+    <!-- Rest Timer Widget (floating, bottom-right) -->
+    <div style="position: absolute; bottom: 56px; right: 24px; background: #0C0C0C; border: 1px solid #222; padding: 12px; border-radius: 4px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 16px; z-index: 50;">
+      <div style="display: flex; flex-direction: column;">
+        <span style="font-size: 9px; color: #52525b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; line-height: 1; margin-bottom: 4px;">Rest Timer</span>
+        <span style="font-size: 24px; font-family: 'JetBrains Mono', monospace; font-weight: 900; color: #10b981;">1:23</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button style="padding: 8px; border: 1px solid #333; color: #d4d4d8; border-radius: 4px; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          <i data-lucide="pause" style="width: 16px; height: 16px;"></i>
+        </button>
+        <button style="padding: 8px 12px; border: 1px solid #333; color: #d4d4d8; border-radius: 4px; background: none; cursor: pointer; font-size: 10px; font-weight: 700; text-transform: uppercase;">+30s</button>
+        <button style="padding: 8px; background: rgba(127,29,29,0.1); border: 1px solid rgba(127,29,29,0.3); color: #ef4444; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          <i data-lucide="square" style="width: 16px; height: 16px;"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Low time timer (red variant) shown below -->
+    <div style="position: absolute; bottom: 56px; right: 24px; background: #0C0C0C; border: 1px solid #222; padding: 12px; border-radius: 4px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 16px; z-index: 50; transform: translateX(-320px);">
+      <div style="display: flex; flex-direction: column;">
+        <span style="font-size: 9px; color: #52525b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; line-height: 1; margin-bottom: 4px;">Rest Timer</span>
+        <span style="font-size: 24px; font-family: 'JetBrains Mono', monospace; font-weight: 900; color: #ef4444;" class="animate-pulse">0:07</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button style="padding: 8px; border: 1px solid #333; color: #d4d4d8; border-radius: 4px; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          <i data-lucide="pause" style="width: 16px; height: 16px;"></i>
+        </button>
+        <button style="padding: 8px 12px; border: 1px solid #333; color: #d4d4d8; border-radius: 4px; background: none; cursor: pointer; font-size: 10px; font-weight: 700; text-transform: uppercase;">+30s</button>
+        <button style="padding: 8px; background: rgba(127,29,29,0.1); border: 1px solid rgba(127,29,29,0.3); color: #ef4444; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          <i data-lucide="square" style="width: 16px; height: 16px;"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer stat bar -->
+    <footer style="height: 40px; border-top: 1px solid #222; background: #0C0C0C; display: flex; align-items: center; padding: 0 24px; justify-content: space-between; font-size: 9px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; color: #71717a;">
+      <div style="display: flex; gap: 24px;">
+        <span>EXERCISES: <span style="color: #fff; font-weight: 700;">2</span></span>
+        <span>COMPLETED SETS: <span style="color: #fff; font-weight: 700;">3 / 4</span></span>
+      </div>
+      <div style="display: flex; gap: 16px;">
+        <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;"></span> ACTIVE</span>
+      </div>
+    </footer>
+  </div>
+</div>
+
+
+<!-- ==================== PAGE 9: ANALYTICS / PROGRESS ==================== -->
+<div id="analytics" class="page-section">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div style="padding: 24px; border-bottom: 1px solid #222;">
+        <h1 style="font-size: 24px; font-weight: 900; letter-spacing: -0.03em; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <i data-lucide="dumbbell" style="width: 24px; height: 24px; color: #10b981;"></i>
+          <span class="hidden sm:inline">Forge.AI</span>
+        </h1>
+        <p class="hidden sm:block" style="font-size: 10px; color: #71717a; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.2em; margin: 4px 0 0 0; text-transform: uppercase;">v2.4.0 High-Performance</p>
+      </div>
+      <nav style="display: flex; flex-direction: row; flex: 1; padding: 16px; gap: 8px;">
+        <div>
+          <p class="hidden sm:block" style="font-size: 10px; font-weight: 700; color: #52525b; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 16px;">Navigation</p>
+          <ul style="display: flex; flex-direction: row; gap: 8px; list-style: none; margin: 0; padding: 0;">
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="calendar" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">My Routines</span>
+            </li>
+            <li class="tab-inactive" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">AI Generator</span>
+            </li>
+            <li class="tab-active" style="cursor: pointer; padding: 12px; display: flex; align-items: center; gap: 12px;">
+              <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+              <span class="hidden sm:inline" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;">Analytics</span>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div class="hidden sm:flex" style="flex-direction: column; border-top: 1px solid #222; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; color: #71717a; margin-bottom: 8px;">
+          <span>USER: john.doe</span>
+          <i data-lucide="log-out" style="width: 16px; height: 16px; cursor: pointer;"></i>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 9px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #71717a; text-transform: uppercase;">
+          <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;" class="animate-pulse"></span>
+          SYNCED
+        </div>
+      </div>
+    </aside>
+    <div class="main-content">
+      <div class="main-inner">
+        <div class="main-inner-content" style="display: flex; flex-direction: column; gap: 32px;">
+          <!-- Title -->
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h2 style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #34d399; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="trophy" style="width: 16px; height: 16px;"></i> Analytics Engine
+            </h2>
+          </div>
+
+          <!-- Week Calendar -->
+          <div style="background: #0C0C0C; border: 1px solid #222; border-radius: 4px; overflow: hidden;">
+            <!-- Week nav header -->
+            <div style="background: #111; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222;">
+              <button style="padding: 4px; color: #71717a; background: none; border: none; cursor: pointer;"><i data-lucide="chevron-left" style="width: 20px; height: 20px;"></i></button>
+              <div style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #fff;">
+                May 12 — May 18, 2026
+              </div>
+              <button style="padding: 4px; color: #71717a; background: none; border: none; cursor: pointer;"><i data-lucide="chevron-right" style="width: 20px; height: 20px;"></i></button>
+            </div>
+
+            <!-- 7-day grid -->
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #222;">
+              <!-- Mon -->
+              <div style="padding: 12px 8px; min-height: 140px; display: flex; flex-direction: column; border-right: 1px solid #222;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                  <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">Mon</span>
+                    <span style="font-size: 14px; font-weight: 700; color: #d4d4d8;">12</span>
+                  </div>
+                </div>
+                <div style="flex: 1;">
+                  <div style="background: #1a1a1a; padding: 8px; border: 1px solid #222; border-radius: 4px; cursor: pointer;">
+                    <p style="font-size: 9px; font-weight: 700; color: #fff; text-transform: uppercase; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">CHEST</p>
+                    <p style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #10b981; margin: 4px 0 0 0;">16 SETS</p>
+                  </div>
+                </div>
+              </div>
+              <!-- Tue -->
+              <div style="padding: 12px 8px; min-height: 140px; display: flex; flex-direction: column; border-right: 1px solid #222;">
+                <div style="margin-bottom: 12px;">
+                  <span style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">Tue</span>
+                  <span style="font-size: 14px; font-weight: 700; color: #d4d4d8; display: block;">13</span>
+                </div>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #3f3f46;">REST</div>
+              </div>
+              <!-- Wed -->
+              <div style="padding: 12px 8px; min-height: 140px; display: flex; flex-direction: column; border-right: 1px solid #222;">
+                <div style="margin-bottom: 12px;">
+                  <span style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">Wed</span>
+                  <span style="font-size: 14px; font-weight: 700; color: #d4d4d8; display: block;">14</span>
+                </div>
+                <div style="flex: 1;">
+                  <div style="background: #1a1a1a; padding: 8px; border: 1px solid #222; border-radius: 4px; cursor: pointer;">
+                    <p style="font-size: 9px; font-weight: 700; color: #fff; text-transform: uppercase; margin: 0;">BACK</p>
+                    <p style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #10b981; margin: 4px 0 0 0;">12 SETS</p>
+                  </div>
+                </div>
+              </div>
+              <!-- Thu -->
+              <div style="padding: 12px 8px; min-height: 140px; display: flex; flex-direction: column; border-right: 1px solid #222;">
+                <div style="margin-bottom: 12px;">
+                  <span style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">Thu</span>
+                  <span style="font-size: 14px; font-weight: 700; color: #d4d4d8; display: block;">15</span>
+                </div>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #3f3f46;">REST</div>
+              </div>
+              <!-- Fri -->
+              <div style="padding: 12px 8px; min-height: 140px; display: flex; flex-direction: column; border-right: 1px solid #222;">
+                <div style="margin-bottom: 12px;">
+                  <span style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">Fri</span>
+                  <span style="font-size: 14px; font-weight: 700; color: #d4d4d8; display: block;">16</span>
+                </div>
+                <div style="flex: 1;">
+                  <div style="background: #1a1a1a; padding: 8px; border: 1px solid #222; border-radius: 4px; cursor: pointer;">
+                    <p style="font-size: 9px; font-weight: 700; color: #fff; text-transform: uppercase; margin: 0;">LEGS</p>
+                    <p style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #10b981; margin: 4px 0 0 0;">18 SETS</p>
+                  </div>
+                </div>
+              </div>
+              <!-- Sat -->
+              <div style="padding: 12px 8px; min-height: 140px; display: flex; flex-direction: column; border-right: 1px solid #222;">
+                <div style="margin-bottom: 12px;">
+                  <span style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">Sat</span>
+                  <span style="font-size: 14px; font-weight: 700; color: #d4d4d8; display: block;">17</span>
+                </div>
+                <div style="flex: 1;">
+                  <div style="background: #1a1a1a; padding: 8px; border: 1px solid #222; border-radius: 4px; cursor: pointer;">
+                    <p style="font-size: 9px; font-weight: 700; color: #fff; text-transform: uppercase; margin: 0;">CARDIO</p>
+                    <p style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #10b981; margin: 4px 0 0 0;">35 MINS</p>
+                  </div>
+                </div>
+              </div>
+              <!-- Sun (Today) -->
+              <div style="padding: 12px 8px; min-height: 140px; display: flex; flex-direction: column; background: rgba(24,24,27,0.3);">
+                <div style="margin-bottom: 12px;">
+                  <span style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #71717a; text-transform: uppercase;">Sun</span>
+                  <span style="font-size: 14px; font-weight: 700; color: #34d399; display: block;">18</span>
+                </div>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #3f3f46;">REST</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly Output Summary -->
+          <div>
+            <p style="font-size: 10px; font-weight: 700; color: #52525b; text-transform: uppercase; letter-spacing: 0.15em; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="calculator" style="width: 12px; height: 12px;"></i> Weekly Output Summary
+            </p>
+            <div style="background: #0C0C0C; border: 1px solid #222; border-radius: 4px; overflow: hidden;">
+              <table style="width: 100%; text-align: left; font-size: 11px; font-family: 'JetBrains Mono', monospace; border-collapse: collapse;">
+                <thead style="background: #111; color: #71717a; text-transform: uppercase;">
+                  <tr style="border-bottom: 1px solid #222;">
+                    <th style="padding: 12px 16px; font-weight: normal;">Target Area</th>
+                    <th style="padding: 12px 16px; font-weight: normal; text-align: right;">Volume (Sets)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom: 1px solid rgba(39,39,42,0.5);">
+                    <td style="padding: 12px 16px; color: #fff; text-transform: uppercase;">LEGS</td>
+                    <td style="padding: 12px 16px; color: #10b981; font-weight: 700; text-align: right;">18</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid rgba(39,39,42,0.5);">
+                    <td style="padding: 12px 16px; color: #fff; text-transform: uppercase;">CHEST</td>
+                    <td style="padding: 12px 16px; color: #10b981; font-weight: 700; text-align: right;">16</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid rgba(39,39,42,0.5);">
+                    <td style="padding: 12px 16px; color: #fff; text-transform: uppercase;">BACK</td>
+                    <td style="padding: 12px 16px; color: #10b981; font-weight: 700; text-align: right;">12</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px 16px; color: #fff; text-transform: uppercase;">CARDIO (MIN)</td>
+                    <td style="padding: 12px 16px; color: #10b981; font-weight: 700; text-align: right;">35</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== PAGE 10: ANALYTICS WORKOUT DETAIL MODAL ==================== -->
+<div id="analytics-modal" class="page-section">
+  <div style="min-height: calc(100vh - 52px); position: relative;">
+    <!-- Background content (dimmed) -->
+    <div style="opacity: 0.15; pointer-events: none;">
+      <div class="app-layout">
+        <aside class="sidebar" style="min-height: calc(100vh - 52px);"></aside>
+        <div class="main-content"><div class="main-inner"><div class="main-inner-content" style="min-height: 600px;"></div></div></div>
+      </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 50;">
+      <div style="background: #0C0C0C; border: 1px solid #333; border-radius: 8px; width: 100%; max-width: 672px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+        <!-- Modal Header -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid #222;">
+          <div>
+            <h3 style="font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #fff; margin: 0;">Push Day — Chest & Triceps</h3>
+            <p style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #71717a; margin: 4px 0 0 0;">May 12, 2026 10:30 AM</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button style="padding: 8px; color: #71717a; background: none; border: none; cursor: pointer;">
+              <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+            </button>
+            <button style="padding: 8px; color: #a1a1aa; background: none; border: none; cursor: pointer;">
+              <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div style="padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px;">
+          <!-- Exercise 1 -->
+          <div style="border: 1px solid #222; border-radius: 4px; background: #111;">
+            <div style="padding: 8px 16px; border-bottom: 1px solid #222;">
+              <h4 style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #fff; margin: 0;">01. Barbell Bench Press</h4>
+            </div>
+            <div style="padding: 16px;">
+              <table style="width: 100%; text-align: left; font-size: 11px; font-family: 'JetBrains Mono', monospace; border-collapse: collapse;">
+                <thead style="color: #71717a;">
+                  <tr>
+                    <th style="padding-bottom: 8px; font-weight: normal;">SET</th>
+                    <th style="padding-bottom: 8px; font-weight: normal;">LBS</th>
+                    <th style="padding-bottom: 8px; font-weight: normal;">REPS</th>
+                    <th style="padding-bottom: 8px; font-weight: normal; text-align: right;">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-top: 1px solid rgba(34,34,34,0.5);"><td style="padding: 8px 0; color: #a1a1aa;">01</td><td style="padding: 8px 0; color: #fff;">135</td><td style="padding: 8px 0; color: #fff;">8</td><td style="padding: 8px 0; text-align: right; color: #10b981;">DONE</td></tr>
+                  <tr style="border-top: 1px solid rgba(34,34,34,0.5);"><td style="padding: 8px 0; color: #a1a1aa;">02</td><td style="padding: 8px 0; color: #fff;">135</td><td style="padding: 8px 0; color: #fff;">8</td><td style="padding: 8px 0; text-align: right; color: #10b981;">DONE</td></tr>
+                  <tr style="border-top: 1px solid rgba(34,34,34,0.5);"><td style="padding: 8px 0; color: #a1a1aa;">03</td><td style="padding: 8px 0; color: #fff;">145</td><td style="padding: 8px 0; color: #fff;">6</td><td style="padding: 8px 0; text-align: right; color: #10b981;">DONE</td></tr>
+                  <tr style="border-top: 1px solid rgba(34,34,34,0.5);"><td style="padding: 8px 0; color: #a1a1aa;">04</td><td style="padding: 8px 0; color: #fff;">145</td><td style="padding: 8px 0; color: #fff;">5</td><td style="padding: 8px 0; text-align: right; color: #52525b;">SKIP</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Exercise 2 -->
+          <div style="border: 1px solid #222; border-radius: 4px; background: #111;">
+            <div style="padding: 8px 16px; border-bottom: 1px solid #222;">
+              <h4 style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #fff; margin: 0;">02. Incline Dumbbell Press</h4>
+            </div>
+            <div style="padding: 16px;">
+              <table style="width: 100%; text-align: left; font-size: 11px; font-family: 'JetBrains Mono', monospace; border-collapse: collapse;">
+                <thead style="color: #71717a;">
+                  <tr>
+                    <th style="padding-bottom: 8px; font-weight: normal;">SET</th>
+                    <th style="padding-bottom: 8px; font-weight: normal;">LBS</th>
+                    <th style="padding-bottom: 8px; font-weight: normal;">REPS</th>
+                    <th style="padding-bottom: 8px; font-weight: normal; text-align: right;">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-top: 1px solid rgba(34,34,34,0.5);"><td style="padding: 8px 0; color: #a1a1aa;">01</td><td style="padding: 8px 0; color: #fff;">50</td><td style="padding: 8px 0; color: #fff;">10</td><td style="padding: 8px 0; text-align: right; color: #10b981;">DONE</td></tr>
+                  <tr style="border-top: 1px solid rgba(34,34,34,0.5);"><td style="padding: 8px 0; color: #a1a1aa;">02</td><td style="padding: 8px 0; color: #fff;">50</td><td style="padding: 8px 0; color: #fff;">10</td><td style="padding: 8px 0; text-align: right; color: #10b981;">DONE</td></tr>
+                  <tr style="border-top: 1px solid rgba(34,34,34,0.5);"><td style="padding: 8px 0; color: #a1a1aa;">03</td><td style="padding: 8px 0; color: #fff;">55</td><td style="padding: 8px 0; color: #fff;">8</td><td style="padding: 8px 0; text-align: right; color: #10b981;">DONE</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Exercise 3 (Cardio) -->
+          <div style="border: 1px solid #222; border-radius: 4px; background: #111;">
+            <div style="padding: 8px 16px; border-bottom: 1px solid #222;">
+              <h4 style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #fff; margin: 0;">03. Treadmill Run</h4>
+            </div>
+            <div style="padding: 16px;">
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; display: flex; gap: 24px;">
+                <div><span style="color: #71717a;">Duration: </span><span style="color: #10b981;">30 min</span></div>
+                <div><span style="color: #71717a;">Distance: </span><span style="color: #10b981;">3 mi</span></div>
+                <div style="margin-left: auto;"><span style="color: #10b981;">DONE</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== PAGE 11: ADD EXERCISE MODAL ==================== -->
+<div id="add-exercise-modal" class="page-section">
+  <div style="min-height: calc(100vh - 52px); position: relative;">
+    <!-- Background content (dimmed) -->
+    <div style="opacity: 0.15; pointer-events: none;">
+      <div style="min-height: calc(100vh - 52px); background: #222; padding: 80px 32px;">
+        <div style="max-width: 56rem; margin: 0 auto; color: #52525b; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; text-align: center;">
+          [ Live Workout page behind modal ]
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 50; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+      <div style="background: #0C0C0C; border: 1px solid #333; border-radius: 4px; max-width: 448px; width: 100%; max-height: 80vh; display: flex; flex-direction: column;">
+        <!-- Modal Header -->
+        <div style="padding: 16px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; background: #111;">
+          <h3 style="font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #E0E0E0; margin: 0;">Select Exercise</h3>
+          <button style="color: #71717a; background: none; border: none; cursor: pointer;">
+            <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+          </button>
+        </div>
+        <!-- Search -->
+        <div style="padding: 16px; border-bottom: 1px solid #222;">
+          <input type="text" placeholder="SEARCH / ADD CUSTOM EXERCISE..." style="width: 100%; background: #1A1A1A; border: 1px solid #333; border-radius: 4px; padding: 8px 12px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #fff; outline: none; font-family: inherit; margin-bottom: 8px;" />
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 10px; text-transform: uppercase; font-weight: 700; color: #71717a; cursor: pointer; width: fit-content;">
+            <input type="checkbox" checked style="accent-color: #10b981; width: 12px; height: 12px; cursor: pointer;" />
+            <span>Show only CHEST exercises</span>
+          </label>
+        </div>
+        <!-- Exercise List -->
+        <div style="flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 4px;">
+          <!-- Create buttons for search -->
+          <button style="width: 100%; text-align: left; padding: 12px; border-radius: 4px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #10b981; background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="plus" style="width: 12px; height: 12px;"></i> "Cable Fly" (Create Strength)
+          </button>
+          <button style="width: 100%; text-align: left; padding: 12px; border-radius: 4px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #10b981; background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="plus" style="width: 12px; height: 12px;"></i> "Cable Fly" (Create Cardio)
+          </button>
+          <!-- Separator -->
+          <div style="border-top: 1px solid #222; margin: 4px 0;"></div>
+          <!-- Previous exercises -->
+          <button style="width: 100%; text-align: left; padding: 12px; border-radius: 4px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; background: none; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span>Barbell Bench Press <span style="color: #71717a; margin-left: 8px; font-size: 9px;">4 Sets previously</span></span>
+            <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #52525b; background: #222; padding: 2px 6px; border-radius: 4px;">CHEST</span>
+          </button>
+          <button style="width: 100%; text-align: left; padding: 12px; border-radius: 4px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; background: none; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span>Incline Dumbbell Press <span style="color: #71717a; margin-left: 8px; font-size: 9px;">3 Sets previously</span></span>
+            <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #52525b; background: #222; padding: 2px 6px; border-radius: 4px;">CHEST</span>
+          </button>
+          <button style="width: 100%; text-align: left; padding: 12px; border-radius: 4px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; background: none; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span>Dumbbell Fly <span style="color: #71717a; margin-left: 8px; font-size: 9px;">3 Sets previously</span></span>
+            <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #52525b; background: #222; padding: 2px 6px; border-radius: 4px;">CHEST</span>
+          </button>
+          <button style="width: 100%; text-align: left; padding: 12px; border-radius: 4px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; background: none; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span>Cable Crossover <span style="color: #71717a; margin-left: 8px; font-size: 9px;">3 Sets previously</span></span>
+            <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #52525b; background: #222; padding: 2px 6px; border-radius: 4px;">CHEST</span>
+          </button>
+          <button style="width: 100%; text-align: left; padding: 12px; border-radius: 4px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #E0E0E0; background: none; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span>Dips (Weighted) <span style="color: #71717a; margin-left: 8px; font-size: 9px;">3 Sets previously</span></span>
+            <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #52525b; background: #222; padding: 2px 6px; border-radius: 4px;">CHEST</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // Initialize Lucide icons
+  lucide.createIcons();
+</script>
+
+</body>
+</html>
