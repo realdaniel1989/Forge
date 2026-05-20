@@ -27,27 +27,6 @@ export const ProgressView: React.FC = () => {
         const fetched: WorkoutLog[] = [];
         snap.forEach(d => fetched.push({ id: d.id, ...d.data() } as WorkoutLog));
         fetched.sort((a, b) => a.date - b.date);
-        // DEBUG: Log fetched workout data
-        console.log('[Analytics] Fetched logs:', fetched.length);
-        fetched.forEach((log, i) => {
-          console.log(`[Analytics] Log ${i}:`, {
-            name: log.name,
-            date: log.date,
-            dateStr: new Date(log.date).toISOString(),
-            bodyPart: log.bodyPart,
-            exerciseCount: log.exercises?.length,
-            exercises: log.exercises?.map(ex => ({
-              name: ex.name,
-              type: ex.type,
-              trackedSets: ex.trackedSets?.length,
-              completedSets: ex.trackedSets?.filter(s => s.completed).length,
-              actualSets: ex.actualSets,
-              sets: ex.sets,
-              reps: ex.reps,
-              trackedSetDetails: ex.trackedSets,
-            }))
-          });
-        });
         setLogs(fetched);
       } catch (e) {
         handleFirestoreError(e, OperationType.LIST, 'workoutLogs');
