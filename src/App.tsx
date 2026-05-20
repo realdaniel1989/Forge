@@ -15,6 +15,12 @@ const MainView = () => {
   const { user } = useAuth();
   const [tab, setTab] = useState('routines');
   const [activeWorkout, setActiveWorkout] = useState<Routine | null>(null);
+  const [mountedTabs, setMountedTabs] = useState<Set<string>>(new Set([tab]));
+
+  const changeTab = (newTab: string) => {
+    setTab(newTab);
+    setMountedTabs(prev => prev.has(newTab) ? prev : new Set([...prev, newTab]));
+  };
 
   if (!user) return <Login />;
 
@@ -27,11 +33,34 @@ const MainView = () => {
   }
 
   return (
-    <Layout currentTab={tab} setTab={setTab}>
-      {tab === 'routines' && <RoutinesList onStartWorkout={setActiveWorkout} onCreateCustom={() => setTab('custom')} onGenerateAI={() => setTab('generate')} />}
-      {tab === 'generate' && <RoutineGenerator onRoutineSaved={() => setTab('routines')} />}
-      {tab === 'custom' && <CustomRoutineBuilder onCancel={() => setTab('routines')} onSave={() => setTab('routines')} />}
-      {tab === 'progress' && <ProgressView />}
+    <Layout currentTab={tab} setTab={changeTab}>
+      {mountedTabs.has('routines') && (
+        <div style={{ display: tab === 'routines' ? 'contents' : 'none' }}>
+          <RoutinesList
+            onStartWorkout={setActiveWorkout}
+            onCreateCustom={() => changeTab('custom')}
+            onGenerateAI={() => changeTab('generate')}
+          />
+        </div>
+      )}
+      {mountedTabs.has('generate') && (
+        <div style={{ display: tab === 'generate' ? 'contents' : 'none' }}>
+          <RoutineGenerator onRoutineSaved={() => changeTab('routines')} />
+        </div>
+      )}
+      {mountedTabs.has('custom') && (
+        <div style={{ display: tab === 'custom' ? 'contents' : 'none' }}>
+          <CustomRoutineBuilder
+            onCancel={() => changeTab('routines')}
+            onSave={() => changeTab('routines')}
+          />
+        </div>
+      )}
+      {mountedTabs.has('progress') && (
+        <div style={{ display: tab === 'progress' ? 'contents' : 'none' }}>
+          <ProgressView />
+        </div>
+      )}
     </Layout>
   );
 };
