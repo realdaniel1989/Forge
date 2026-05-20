@@ -11,8 +11,8 @@ export interface Exercise {
   sets?: number;
   reps?: number;
   weight?: number;
-  duration?: number; // for cardio (minutes)
-  distance?: number; // for cardio (km/miles)
+  duration?: number;
+  distance?: number;
   tip?: string;
   actualSets?: number;
   actualReps?: number;
@@ -40,4 +40,24 @@ export interface WorkoutLog {
   date: number;
   unit: 'lbs' | 'kgs';
   exercises: Exercise[];
+  calories?: number;
+}
+
+export interface Habit {
+  id: string;
+  userId: string;
+  name: string;
+  target: number;
+  unit: string;
+  createdAt: number;
+  archived: boolean;
+}
+
+export interface HabitLog {
+  id: string;
+  userId: string;
+  habitId: string;
+  date: string;    // "YYYY-MM-DD"
+  actual: number;
+  createdAt: number;
 }
