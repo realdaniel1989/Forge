@@ -263,8 +263,8 @@ export const ProgressView: React.FC = () => {
                 <div className="px-5 pt-4 pb-2 overflow-x-auto">
                   <svg
                     width={Math.max(barDays.length * 60, 420)}
-                    height={160}
-                    viewBox={`0 0 ${Math.max(barDays.length * 60, 420)} 160`}
+                    height={180}
+                    viewBox={`0 0 ${Math.max(barDays.length * 60, 420)} 180`}
                     style={{ display: 'block', minWidth: '100%' }}
                   >
                     {barDays.map((d, i) => {
@@ -273,13 +273,14 @@ export const ProgressView: React.FC = () => {
                       const barW = Math.max(colW - 12, 12);
                       const barX = i * colW + (colW - barW) / 2;
                       const maxBarH = 100;
-                      const baseline = 130;
+                      const baseline = 148;
+                      const topPadding = 20; // room for total label above bars
 
                       if (d.calories === 0) {
                         return (
                           <g key={d.label + i}>
                             <rect x={barX} y={baseline - maxBarH} width={barW} height={maxBarH} rx={3} fill="none" stroke="var(--hairline-2)" strokeDasharray="3 2" />
-                            <text x={barX + barW / 2} y={148} textAnchor="middle" fontSize={9} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">
+                            <text x={barX + barW / 2} y={168} textAnchor="middle" fontSize={9} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">
                               {d.label}
                             </text>
                           </g>
@@ -292,14 +293,14 @@ export const ProgressView: React.FC = () => {
                         isCardio: w.isCardio,
                         h: maxBarH * (w.calories / maxCalories),
                       }));
-                      const gap = segments.length > 1 ? 2 : 0;
+                      const gap = segments.length > 1 ? 4 : 0;
                       const totalGap = gap * (segments.length - 1);
-                      const scale = (maxBarH - totalGap) / (maxBarH);
+                      const scale = (maxBarH - totalGap) / maxBarH;
 
                       let cursor = baseline;
                       const rects: { y: number; h: number; color: string; label: string }[] = [];
                       segments.forEach(seg => {
-                        const h = seg.h * scale;
+                        const h = Math.max(seg.h * scale, 2);
                         cursor -= h;
                         rects.push({ y: cursor, h, color: seg.isCardio ? AMBER : 'var(--action)', label: String(seg.cal) });
                         cursor -= gap;
@@ -310,6 +311,10 @@ export const ProgressView: React.FC = () => {
                           {rects.map((r, ri) => (
                             <g key={ri}>
                               <rect x={barX} y={r.y} width={barW} height={r.h} rx={ri === 0 ? 3 : 0} fill={r.color} opacity={0.85} />
+                              {/* Separator line between segments */}
+                              {ri > 0 && (
+                                <line x1={barX} y1={r.y + r.h + gap / 2} x2={barX + barW} y2={r.y + r.h + gap / 2} stroke="var(--canvas)" strokeWidth={gap} />
+                              )}
                               {r.h >= 14 && (
                                 <text x={barX + barW / 2} y={r.y + r.h / 2 + 4} textAnchor="middle" fontSize={9} fontWeight="bold" fill="white" fontFamily="'Barlow Condensed', sans-serif">
                                   {r.label}
@@ -318,10 +323,10 @@ export const ProgressView: React.FC = () => {
                             </g>
                           ))}
                           {/* Total above bar */}
-                          <text x={barX + barW / 2} y={rects[0].y - 5} textAnchor="middle" fontSize={10} fontWeight="bold" fill="var(--ink)" fontFamily="'Barlow Condensed', sans-serif">
+                          <text x={barX + barW / 2} y={rects[0].y - 6} textAnchor="middle" fontSize={11} fontWeight="bold" fill="var(--ink)" fontFamily="'Barlow Condensed', sans-serif">
                             {d.calories}
                           </text>
-                          <text x={barX + barW / 2} y={148} textAnchor="middle" fontSize={9} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">
+                          <text x={barX + barW / 2} y={168} textAnchor="middle" fontSize={9} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">
                             {d.label}
                           </text>
                         </g>
