@@ -103,8 +103,11 @@ export const ProgressView: React.FC = () => {
   const msPerDay = 86_400_000;
   const AMBER = '#F59E0B';
 
-  const isWorkoutCardio = (log: WorkoutLog) =>
-    (log.bodyPart || '').toLowerCase() === 'cardio';
+  const isWorkoutCardio = (log: WorkoutLog) => {
+    if ((log.bodyPart || '').toLowerCase() === 'cardio') return true;
+    const exs = log.exercises || [];
+    return exs.length > 0 && exs.every(e => e.type === 'cardio');
+  };
 
   interface DayWorkout {
     id: string;
@@ -153,6 +156,8 @@ export const ProgressView: React.FC = () => {
     }
     return days;
   })();
+
+  const maxDayCalories = barDays.length > 0 ? Math.max(...barDays.map(d => d.calories), 0) : 0;
 
   // Stats for 30-day / all-time views
   const extendedStats = (() => {
@@ -287,20 +292,21 @@ export const ProgressView: React.FC = () => {
                         );
                       }
 
-                      // Build stacked segments
+                      // Build stacked segments — scale to max DAILY total, not max single session
+                      const gap = d.workouts.length > 1 ? 4 : 0;
+                      const totalGap = gap * (d.workouts.length - 1);
+                      const totalH = maxDayCalories > 0 ? maxBarH * (d.calories / maxDayCalories) : 0;
+
                       const segments = d.workouts.map(w => ({
                         cal: w.calories,
                         isCardio: w.isCardio,
-                        h: maxBarH * (w.calories / maxCalories),
+                        h: d.calories > 0 ? (w.calories / d.calories) * (totalH - totalGap) : 0,
                       }));
-                      const gap = segments.length > 1 ? 4 : 0;
-                      const totalGap = gap * (segments.length - 1);
-                      const scale = (maxBarH - totalGap) / maxBarH;
 
                       let cursor = baseline;
                       const rects: { y: number; h: number; color: string; label: string }[] = [];
                       segments.forEach(seg => {
-                        const h = Math.max(seg.h * scale, 2);
+                        const h = Math.max(seg.h, 2);
                         cursor -= h;
                         rects.push({ y: cursor, h, color: seg.isCardio ? AMBER : 'var(--action)', label: String(seg.cal) });
                         cursor -= gap;
@@ -310,7 +316,7 @@ export const ProgressView: React.FC = () => {
                         <g key={d.label + i}>
                           {rects.map((r, ri) => (
                             <g key={ri}>
-                              <rect x={barX} y={r.y} width={barW} height={r.h} rx={ri === 0 ? 3 : 0} fill={r.color} opacity={0.85} />
+                              <rect x={barX} y={r.y} width={barW} height={r.h} rx={(ri === 0 || ri === rects.length - 1) ? 3 : 0} fill={r.color} opacity={0.85} />
                               {/* Separator line between segments */}
                               {ri > 0 && (
                                 <line x1={barX} y1={r.y + r.h + gap / 2} x2={barX + barW} y2={r.y + r.h + gap / 2} stroke="var(--canvas)" strokeWidth={gap} />
@@ -323,7 +329,7 @@ export const ProgressView: React.FC = () => {
                             </g>
                           ))}
                           {/* Total above bar */}
-                          <text x={barX + barW / 2} y={rects[0].y - 6} textAnchor="middle" fontSize={11} fontWeight="bold" fill="var(--ink)" fontFamily="'Barlow Condensed', sans-serif">
+                          <text x={barX + barW / 2} y={rects[rects.length - 1].y - 6} textAnchor="middle" fontSize={11} fontWeight="bold" fill="var(--ink)" fontFamily="'Barlow Condensed', sans-serif">
                             {d.calories}
                           </text>
                           <text x={barX + barW / 2} y={168} textAnchor="middle" fontSize={9} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">

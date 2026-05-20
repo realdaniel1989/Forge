@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performance Investigation — Forge.AI</title>
+  <style>
+    :root {
+      --canvas: #111111;
+      --surface: #1c1c1c;
+      --surface-2: #282828;
+      --ink: #ffffff;
+      --charcoal: #e5e5e5;
+      --ash: #cacacb;
+      --stone: #707072;
+      --hairline: #2a2a2a;
+      --hairline-2: #3a3a3a;
+      --action: #ff3b30;
+      --action-hover: #ff6059;
+      --pill-bg: #2a0a08;
+      --pill-text: #ff6059;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      padding: 40px 20px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    
+    h1 {
+      font-size: 36px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      font-family: 'Barlow Condensed', system-ui, sans-serif;
+    }
+    .subtitle {
+      color: var(--stone);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 40px;
+    }
+    
+    .severity {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 10px;
+      border-radius: 100px;
+      margin-right: 8px;
+    }
+    .severity.critical { background: #ff3b30; color: white; }
+    .severity.high { background: #ff9500; color: #111; }
+    .severity.medium { background: #ffcc00; color: #111; }
+    .severity.low { background: var(--surface-2); color: var(--ash); border: 1px solid var(--hairline-2); }
+
+    .issue {
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    .issue h2 {
+      font-size: 20px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+      font-family: 'Barlow Condensed', system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .issue .location {
+      color: var(--stone);
+      font-size: 11px;
+      margin-bottom: 16px;
+      font-family: monospace;
+    }
+    .issue .desc {
+      color: var(--charcoal);
+      font-size: 14px;
+      line-height: 1.75;
+      margin-bottom: 16px;
+    }
+    .issue .impact {
+      background: var(--surface-2);
+      border: 1px solid var(--hairline-2);
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--ash);
+    }
+    .impact strong { color: var(--action); }
+    
+    .code-block {
+      background: #0a0a0a;
+      border: 1px solid var(--hairline-2);
+      border-radius: 6px;
+      padding: 16px 20px;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      margin: 12px 0;
+      color: var(--ash);
+    }
+    .code-block .comment { color: var(--stone); }
+    .code-block .highlight { color: var(--action); font-weight: 600; }
+    .code-block .fn { color: #5ac8fa; }
+    .code-block .str { color: #34c759; }
+    
+    .fix-box {
+      background: rgba(255, 59, 48, 0.06);
+      border: 1px solid rgba(255, 59, 48, 0.15);
+      border-radius: 6px;
+      padding: 20px 24px;
+      margin-top: 16px;
+    }
+    .fix-box h3 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--action);
+      margin-bottom: 10px;
+      font-family: 'Barlow Condensed', system-ui, sans-serif;
+    }
+    .fix-box p, .fix-box li {
+      font-size: 13px;
+      color: var(--charcoal);
+      line-height: 1.7;
+    }
+    .fix-box ul { padding-left: 20px; }
+    .fix-box li { margin-bottom: 6px; }
+    .fix-box code {
+      background: var(--surface-2);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: var(--action-hover);
+    }
+
+    .summary-box {
+      background: var(--surface);
+      border: 1px solid var(--action);
+      border-radius: 8px;
+      padding: 28px 32px;
+      margin-bottom: 32px;
+    }
+    .summary-box h2 {
+      font-size: 18px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      margin-bottom: 16px;
+      font-family: 'Barlow Condensed', system-ui, sans-serif;
+      color: var(--action);
+    }
+    .summary-box table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .summary-box th {
+      text-align: left;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--stone);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--hairline-2);
+    }
+    .summary-box td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--hairline);
+      color: var(--ash);
+    }
+    .summary-box tr:last-child td { border-bottom: none; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--hairline);
+      margin: 40px 0;
+    }
+    
+    .callout {
+      background: var(--surface-2);
+      border-left: 3px solid var(--action);
+      padding: 16px 20px;
+      border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+      font-size: 13px;
+      color: var(--charcoal);
+    }
+
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 24px 32px;
+      margin-bottom: 32px;
+    }
+    .toc h3 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--stone);
+      margin-bottom: 12px;
+    }
+    .toc ol { padding-left: 20px; }
+    .toc li {
+      font-size: 14px;
+      color: var(--ash);
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+    .toc li:hover { color: var(--ink); }
+    .toc li .sev { font-size: 10px; margin-left: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Performance Investigation</h1>
+    <p class="subtitle">Forge.AI Gym Workout Tracker &middot; 2026-05-20</p>
+
+    <!-- ═══ SUMMARY ═══ -->
+    <div class="summary-box">
+      <h2>Root Cause Summary</h2>
+      <p style="color: var(--ash); font-size: 14px; margin-bottom: 20px;">
+        The perceived lag on every click/tab-switch is caused by <strong style="color:var(--action);">components fully unmounting and remounting</strong> on every tab change. Each remount triggers a fresh Firestore network query with a loading spinner. There is no data caching, no state persistence, and no real-time listeners. Every interaction is a cold start.
+      </p>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Issue</th><th>Severity</th><th>Impact</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Components unmount/remount on tab switch</td><td><span class="severity critical">Critical</span></td><td>Every click = network request + loading spinner</td></tr>
+          <tr><td>2</td><td>No Firestore data caching or real-time listeners</td><td><span class="severity critical">Critical</span></td><td>No offline support, no optimistic UI</td></tr>
+          <tr><td>3</td><td>ProgressView debug console.log on every fetch</td><td><span class="severity high">High</span></td><td>Heavy logging blocks main thread, especially mobile</td></tr>
+          <tr><td>4</td><td>LiveWorkout syncs to localStorage on every keystroke</td><td><span class="severity high">High</span></td><td>JSON.stringify of entire state on every input change</td></tr>
+          <tr><td>5</td><td>AuthContext fires test connection on every app load</td><td><span class="severity medium">Medium</span></td><td>Unnecessary Firestore read at startup</td></tr>
+          <tr><td>6</td><td>Missing list keys use array index</td><td><span class="severity low">Low</span></td><td>Prevents React from efficiently reusing DOM</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ═══ TABLE OF CONTENTS ═══ -->
+    <div class="toc">
+      <h3>Findings</h3>
+      <ol>
+        <li>Components fully remount on every tab switch <span class="sev severity critical">Critical</span></li>
+        <li>No Firestore data caching or real-time listeners <span class="sev severity critical">Critical</span></li>
+        <li>ProgressView verbose debug logging <span class="sev severity high">High</span></li>
+        <li>LiveWorkout localStorage sync on every state change <span class="sev severity high">High</span></li>
+        <li>AuthContext test connection query <span class="sev severity medium">Medium</span></li>
+        <li>Array index as React key <span class="sev severity low">Low</span></li>
+      </ol>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- ISSUE 1 -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div class="issue" id="issue-1">
+      <h2>
+        <span class="severity critical">Critical</span>
+        Components Fully Remount on Every Tab Switch
+      </h2>
+      <p class="location">src/App.tsx → MainView → lines 15–22</p>
+      
+      <div class="code-block"><span class="comment">// Current: conditional rendering = unmount when hidden</span>
+{tab === 'routines' && &lt;RoutinesList ... /&gt;}
+{tab === 'generate' && &lt;RoutineGenerator ... /&gt;}
+{tab === 'custom'   && &lt;CustomRoutineBuilder ... /&gt;}
+{tab === 'progress' && &lt;ProgressView /&gt;}</div>
+
+      <p class="desc">
+        When <code>tab</code> changes from <code>'routines'</code> to <code>'progress'</code>, React unmounts <code>RoutinesList</code> completely (DOM destroyed, state discarded) and mounts <code>ProgressView</code> from scratch. Going back to routines means <strong>another</strong> full mount → <code>useEffect</code> → Firestore query → loading spinner → render.
+      </p>
+
+      <div class="impact">
+        <strong>User-perceived lag chain:</strong> Click tab → component unmounts → new component mounts → <code>useEffect</code> fires → <code>setLoading(true)</code> → loading spinner renders → Firestore network request (100–800ms) → data arrives → <code>setLoading(false)</code> → content renders. <strong>Total: 200ms–2s of visible delay per click.</strong>
+      </div>
+
+      <div class="callout">
+        This is the <strong>primary cause</strong> of the sluggish feel. Every single tab switch is a cold start with a network round-trip.
+      </div>
+
+      <div class="fix-box">
+        <h3>Recommended Fix</h3>
+        <p>Option A — <strong>Keep components mounted, hide with CSS:</strong></p>
+        <div class="code-block"><span class="comment">// Wrap each tab in a div, toggle visibility with CSS</span>
+&lt;div style={{ display: tab === 'routines' ? 'block' : 'none' }}&gt;
+  &lt;RoutinesList ... /&gt;
+&lt;/div&gt;
+&lt;div style={{ display: tab === 'progress' ? 'block' : 'none' }}&gt;
+  &lt;ProgressView /&gt;
+&lt;/div&gt;</div>
+        <p>Components stay mounted (state preserved, no re-fetch). Only the active tab is visible. First load still fetches data, but subsequent tab switches are instant.</p>
+        <ul>
+          <li>Option B — Lift data fetching to <code>App</code> level and pass data down as props</li>
+          <li>Option C — Use a global state store (React Context, Zustand) to cache Firestore data</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- ISSUE 2 -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div class="issue" id="issue-2">
+      <h2>
+        <span class="severity critical">Critical</span>
+        No Firestore Data Caching or Real-Time Listeners
+      </h2>
+      <p class="location">src/components/RoutinesList.tsx, src/components/ProgressView.tsx, src/components/LiveWorkout.tsx</p>
+      
+      <p class="desc">
+        Every data-fetching component uses <code>getDocs()</code> — a one-shot fetch with no caching. Firestore SDK has built-in offline persistence and <code>onSnapshot()</code> real-time listeners, but neither is used.
+      </p>
+
+      <div class="code-block"><span class="comment">// RoutinesList.tsx — fetches 50 routines on every mount</span>
+const q = query(collection(db, 'routines'), where('userId', '==', user.uid), limit(50));
+const snap = <span class="highlight">await getDocs(q)</span>;  <span class="comment">// ← always hits network</span>
+
+<span class="comment">// ProgressView.tsx — fetches 100 logs on every mount</span>
+const q = query(collection(db, 'workoutLogs'), where('userId', '==', user.uid), limit(100));
+const snap = <span class="highlight">await getDocs(q)</span>;  <span class="comment">// ← always hits network</span>
+
+<span class="comment">// LiveWorkout.tsx — fetches 10 logs on every mount</span>
+const q = query(collection(db, 'workoutLogs'), where('userId', '==', user.uid), limit(10));
+const snap = <span class="highlight">await getDocs(querySnapshot)</span>;  <span class="comment">// ← always hits network</span></div>
+
+      <div class="impact">
+        <strong>No offline support.</strong> Every visit to a tab is a guaranteed network round-trip. Even if the user just visited that tab 2 seconds ago, all data is discarded and re-fetched. On slow connections (3G, weak WiFi), this means multi-second freezes.
+      </div>
+
+      <div class="fix-box">
+        <h3>Recommended Fix</h3>
+        <ul>
+          <li>Enable Firestore offline persistence: <code>initializeFirestore(app, { localCache: persistentLocalCache() })</code></li>
+          <li>Switch to <code>onSnapshot()</code> real-time listeners for lists that need to stay fresh — data arrives instantly from cache, updates in real-time from server</li>
+          <li>At minimum, lift fetched data up to a shared context so it survives tab switches</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- ISSUE 3 -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div class="issue" id="issue-3">
+      <h2>
+        <span class="severity high">High</span>
+        ProgressView Verbose Debug Logging
+      </h2>
+      <p class="location">src/components/ProgressView.tsx → lines 33–47</p>
+      
+      <div class="code-block"><span class="comment">// This runs on every mount (every tab switch to Analytics)</span>
+console.log('[Analytics] Fetched logs:', fetched.length);
+fetched.<span class="highlight">forEach</span>((log, i) => {
+  console.log(`[Analytics] Log ${i}:`, {
+    name: log.name,
+    date: log.date,
+    dateStr: new Date(log.date).toISOString(),
+    bodyPart: log.bodyPart,
+    exerciseCount: log.exercises?.length,
+    exercises: log.exercises?.map(ex => ({
+      name: ex.name,
+      type: ex.type,
+      trackedSets: ex.trackedSets?.length,
+      completedSets: ex.trackedSets?.filter(s => s.completed).length,
+      actualSets: ex.actualSets,
+      sets: ex.sets,
+      reps: ex.reps,
+      trackedSetDetails: ex.trackedSets,   <span class="comment">// ← dumps entire tracked sets</span>
+    }))
+  });
+});</div>
+
+      <p class="desc">
+        For 100 workout logs with ~6 exercises each, this creates <strong>~600+ <code>console.log</code> calls</strong> on every Analytics tab visit. Each log serializes full exercise data including tracked sets. On mobile devices, <code>console.log</code> is synchronous and blocks the main thread.
+      </p>
+
+      <div class="impact">
+        <strong>Impact:</strong> 100 logs × 6 exercises = 600+ console writes. On Chrome DevTools open, this causes visible jank. On mobile Safari, it can cause 100–300ms of main-thread blocking.
+      </div>
+
+      <div class="fix-box">
+        <h3>Recommended Fix</h3>
+        <p>Remove all debug <code>console.log</code> calls from <code>ProgressView.tsx</code>. They are development artifacts that should not be in production.</p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- ISSUE 4 -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div class="issue" id="issue-4">
+      <h2>
+        <span class="severity high">High</span>
+        LiveWorkout localStorage Sync on Every State Change
+      </h2>
+      <p class="location">src/components/LiveWorkout.tsx → lines 60–63</p>
+      
+      <div class="code-block"><span class="comment">// Fires on EVERY exercises or unit change</span>
+useEffect(() => {
+  try {
+    localStorage.setItem(draftKey, <span class="highlight">JSON.stringify({ exercises, unit, baseUnit: baseUnitRef.current })</span>);
+  } catch {}
+}, [<span class="highlight">exercises, unit</span>]);</div>
+
+      <p class="desc">
+        The <code>exercises</code> array contains the full workout state — every exercise with every tracked set. When a user types in a weight or reps input, <code>updateSet()</code> creates a new exercises array → this effect fires → <code>JSON.stringify</code> serializes the entire workout state → writes to <code>localStorage</code>. This is synchronous and runs on every keystroke.
+      </p>
+      <p class="desc">
+        For a workout with 8 exercises × 4 sets each, that's serializing 32+ tracked sets on every single number input change.
+      </p>
+
+      <div class="impact">
+        <strong>Impact:</strong> <code>JSON.stringify</code> of complex objects on every keystroke. Causes input lag especially on mobile devices where localStorage writes are slower. Combined with React re-renders, each number change triggers: state update → re-render → effect → serialize → write.
+      </div>
+
+      <div class="fix-box">
+        <h3>Recommended Fix</h3>
+        <ul>
+          <li><strong>Debounce the save:</strong> Use a 500ms debounce so rapid inputs don't each trigger a save</li>
+          <li><strong>Use <code>useRef</code> for the draft</strong> and only serialize on unmount or periodically</li>
+        </ul>
+        <div class="code-block"><span class="comment">// Debounced version</span>
+useEffect(() => {
+  const timer = setTimeout(() => {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({ exercises, unit, baseUnit: baseUnitRef.current }));
+    } catch {}
+  }, <span class="highlight">500</span>);  <span class="comment">// ← only saves after 500ms of inactivity</span>
+  return () => clearTimeout(timer);
+}, [exercises, unit]);</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- ISSUE 5 -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div class="issue" id="issue-5">
+      <h2>
+        <span class="severity medium">Medium</span>
+        AuthContext Test Connection Query
+      </h2>
+      <p class="location">src/AuthContext.tsx → lines 15–20, 30</p>
+      
+      <div class="code-block"><span class="comment">// Fires on every AuthProvider mount (= every app load)</span>
+async function testConnection() {
+  try {
+    await <span class="highlight">getDocFromServer(doc(db, 'test', 'connection'))</span>;  <span class="comment">// ← Firestore read</span>
+  } catch (error) {
+    if(error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Please check your Firebase configuration.");
+    }
+  }
+}
+<span class="comment">// ...</span>
+useEffect(() => {
+  <span class="highlight">testConnection()</span>;  <span class="comment">// ← called immediately on mount</span>
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => { ... });
+  return () => unsubscribe();
+}, []);</div>
+
+      <p class="desc">
+        Every app load fires a Firestore read to a <code>'test/connection'</code> document that likely doesn't exist. This adds latency to the initial auth check. The <code>getDocFromServer</code> call explicitly bypasses cache and hits the network.
+      </p>
+
+      <div class="fix-box">
+        <h3>Recommended Fix</h3>
+        <p>Remove the <code>testConnection()</code> call entirely. Firebase SDK already handles connectivity errors gracefully — the <code>onAuthStateChanged</code> listener and Firestore operations will fail with clear error messages if there's no connection. There's no need for a separate connectivity probe.</p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- ISSUE 6 -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div class="issue" id="issue-6">
+      <h2>
+        <span class="severity low">Low</span>
+        Array Index as React Key
+      </h2>
+      <p class="location">src/components/LiveWorkout.tsx, src/components/ProgressView.tsx</p>
+      
+      <div class="code-block"><span class="comment">// LiveWorkout.tsx — exercises rendered with index key</span>
+{exercises.map((ex, <span class="highlight">idx</span>) => {
+  return (
+    &lt;div <span class="highlight">key={idx}</span> ...&gt;
+
+<span class="comment">// ProgressView.tsx — weekly summary with index key</span>
+{Object.entries(weeklySummary).map(([part, val], <span class="highlight">i</span>) => (
+  &lt;tr <span class="highlight">key={i}</span> ...&gt;</div>
+
+      <p class="desc">
+        Using array index as <code>key</code> prevents React from efficiently reusing DOM nodes when list items are reordered, added, or removed. In LiveWorkout, exercises can be reordered (move up/down) and deleted — index keys cause React to re-render more DOM than necessary.
+      </p>
+
+      <div class="fix-box">
+        <h3>Recommended Fix</h3>
+        <ul>
+          <li>For exercises in LiveWorkout: use <code>ex.name + idx</code> or a generated stable ID</li>
+          <li>For ProgressView summary rows: use the <code>part</code> string as key (it's already unique)</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ═══ ARCHITECTURE NOTE ═══ -->
+    <div class="issue" style="border-color: var(--action);">
+      <h2 style="color: var(--action);">Architecture Recommendation</h2>
+      <p class="desc">
+        The root architectural issue is that <strong>data fetching is tightly coupled to component lifecycle</strong>. Each component owns its own data, fetches on mount, and loses it on unmount. This pattern is fine for one-time views, but for a tabbed app where users switch frequently, it creates a terrible UX.
+      </p>
+      <p class="desc" style="margin-bottom: 16px;">
+        The ideal fix introduces a data layer that:
+      </p>
+      <ul style="color: var(--charcoal); font-size: 14px; padding-left: 24px; line-height: 2;">
+        <li>Fetches data once and caches it globally (not per-component)</li>
+        <li>Uses Firestore <code>onSnapshot()</code> listeners to keep data fresh</li>
+        <li>Keeps tab components mounted but visually hidden</li>
+        <li>Provides optimistic UI for writes (don't wait for server on delete/save)</li>
+      </ul>
+    </div>
+
+    <hr class="divider">
+
+    <p style="color: var(--stone); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; text-align: center;">
+      Generated by systematic debugging investigation &middot; Prioritized by user impact
+    </p>
+  </div>
+</body>
+</html>

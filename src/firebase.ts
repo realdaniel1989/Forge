@@ -20,7 +20,7 @@ let initError: string | null = null;
 
 try {
   app = initializeApp(firebaseConfig);
-  db = initializeFirestore(app, { localCache: persistentLocalCache() }, firestoreDatabaseId);
+  db = initializeFirestore(app, { localCache: persistentLocalCache(), ignoreUndefinedProperties: true }, firestoreDatabaseId);
   auth = getAuth(app);
 } catch (e) {
   initError = e instanceof Error ? e.message : String(e);
