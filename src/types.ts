@@ -4,8 +4,16 @@ export interface TrackedSet {
   completed: boolean;
 }
 
+export const BODY_PARTS = [
+  'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps',
+  'Legs', 'Core', 'Glutes', 'Forearms', 'Calves', 'Cardio'
+] as const;
+
+export type BodyPart = typeof BODY_PARTS[number];
+
 export interface Exercise {
   _id?: string;
+  bodyPart?: BodyPart;
   name: string;
   type?: 'strength' | 'cardio';
   sets?: number;
