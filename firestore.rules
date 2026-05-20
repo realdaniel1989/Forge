@@ -138,5 +138,31 @@ service cloud.firestore {
 
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
+
+    // ExerciseLibrary Validation
+    function isValidExerciseEntry(data) {
+      return data.keys().hasAll(['userId', 'name', 'nameKey', 'bodyPart', 'type', 'createdAt']) &&
+        data.size() <= 10 &&
+        data.userId == request.auth.uid &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.nameKey is string && data.nameKey.size() > 0 && data.nameKey.size() <= 100 &&
+        data.bodyPart is string && data.bodyPart.size() > 0 &&
+        data.type is string && data.type.matches('^(strength|cardio)$') &&
+        data.createdAt is number;
+    }
+
+    match /exerciseLibrary/{entryId} {
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() && isValidExerciseEntry(incoming());
+
+      allow update: if isSignedIn() &&
+        existing().userId == request.auth.uid &&
+        incoming().userId == existing().userId &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['bodyPart']);
+
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
   }
 }

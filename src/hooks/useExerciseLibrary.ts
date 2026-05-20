@@ -52,14 +52,7 @@ export function useExerciseLibrary() {
   ): Promise<void> => {
     if (!user || !name.trim()) return;
     const nameKey = normalizeExerciseName(name);
-    // Use a ref-check approach: attempt write only if not already present
-    let shouldWrite = false;
-    setEntries(prev => {
-      if (prev.some(e => e.nameKey === nameKey)) return prev;
-      shouldWrite = true;
-      return prev;
-    });
-    if (!shouldWrite) return;
+    if (entries.some(e => e.nameKey === nameKey)) return;
     try {
       const createdAt = Date.now();
       const docRef = await addDoc(collection(db, 'exerciseLibrary'), {
@@ -89,7 +82,7 @@ export function useExerciseLibrary() {
       setError('Failed to add exercise to library');
       throw e;
     }
-  }, [user]); // no 'entries' dependency — reads prev inside updater
+  }, [user, entries]);
 
   const updateBodyPart = useCallback(async (id: string, newBodyPart: BodyPart): Promise<void> => {
     // Optimistic update
