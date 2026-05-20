@@ -130,7 +130,7 @@ export const ProgressView: React.FC = () => {
             const isToday = isSameDay(day, new Date());
             return (
               <div
-                key={i}
+                key={format(day, 'yyyy-MM-dd')}
                 className={`px-4 py-4 min-h-[200px] flex flex-col ${isToday ? 'bg-[var(--surface)]' : ''} ${i < 6 ? 'border-r border-[var(--hairline)]' : ''}`}
               >
                 {/* Day header */}
@@ -192,7 +192,7 @@ export const ProgressView: React.FC = () => {
           const isToday = isSameDay(day, new Date());
           return (
             <div
-              key={i}
+              key={format(day, 'yyyy-MM-dd')}
               className={`flex items-start gap-3 px-4 py-3 min-h-[56px] ${isToday ? 'bg-[var(--surface)]' : ''} ${i < 6 ? 'border-b border-[var(--hairline)]' : ''}`}
             >
               <div className="shrink-0 w-12 text-center pt-0.5">
@@ -243,8 +243,8 @@ export const ProgressView: React.FC = () => {
             ) : (
               Object.entries(weeklySummary)
                 .sort((a, b) => b[1] - a[1])
-                .map(([part, val], i) => (
-                  <tr key={i} className="border-b border-[var(--hairline)] hover:bg-[var(--surface)] transition-colors">
+                .map(([part, val]) => (
+                  <tr key={part} className="border-b border-[var(--hairline)] hover:bg-[var(--surface)] transition-colors">
                     <td className="py-3 px-5 font-semibold uppercase text-[var(--ink)]" style={condensed}>{part}</td>
                     <td className="py-3 px-5 font-bold text-[var(--action)] text-right" style={condensed}>{val}</td>
                   </tr>
@@ -288,7 +288,7 @@ export const ProgressView: React.FC = () => {
                 const hasLegacyLog = ex.actualSets != null && ex.actualSets > 0;
                 const isCardio = ex.type === 'cardio' || (!ex.trackedSets && ex.duration != null && ex.sets == null);
                 return (
-                  <div key={idx} className="border border-[var(--hairline)] rounded-lg overflow-hidden shrink-0">
+                  <div key={`${ex.name}-${idx}`} className="border border-[var(--hairline)] rounded-lg overflow-hidden shrink-0">
                     <div className="px-4 py-2.5 border-b border-[var(--hairline)] bg-[var(--surface)] flex items-center justify-between">
                       <h4 className="text-[13px] font-semibold uppercase text-[var(--ink)]" style={condensed}>
                         {String(idx + 1).padStart(2, '0')}. {ex.name}

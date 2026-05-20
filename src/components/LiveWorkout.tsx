@@ -398,9 +398,9 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
           <div className="grid grid-cols-1 gap-2.5 max-w-4xl mx-auto">
             {exercises.map((ex, idx) => {
               const isActive = idx === activeExerciseIndex;
-              
+
               return (
-                <div key={idx} className={`bg-[var(--bg-1)] border rounded-[var(--radius)] overflow-hidden ${isActive ? 'border-[var(--border-2)]' : 'border-[var(--border)]'}`}>
+                <div key={`${ex.name}-${idx}`} className={`bg-[var(--bg-1)] border rounded-[var(--radius)] overflow-hidden ${isActive ? 'border-[var(--border-2)]' : 'border-[var(--border)]'}`}>
                   <div className="px-4 py-3 border-b border-[var(--border)] flex justify-between items-center">
                     <div className="flex items-center gap-2.5">
                       <span className={`font-mono text-[10px] font-bold ${isActive ? 'text-[var(--red)]' : 'text-[var(--muted)]'}`}>
@@ -659,9 +659,9 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                 .filter(hist => hist.name.toLowerCase().includes(searchQuery.toLowerCase()) || (hist.bodyPart && hist.bodyPart.toLowerCase().includes(searchQuery.toLowerCase())))
                 .filter(hist => !filterByBodyPart || !routine.bodyPart || (hist.bodyPart && hist.bodyPart.toLowerCase() === routine.bodyPart.toLowerCase()))
                 .sort((a,b) => a.name.localeCompare(b.name))
-                .map((hist, i) => (
+                .map((hist) => (
                   <button
-                    key={i}
+                    key={hist.name}
                     onClick={() => addExercise(hist.name, hist)}
                     className="w-full text-left px-3 py-2.5 rounded-[var(--radius-sm)] text-[12px] font-medium text-[var(--text)] bg-transparent border-none cursor-pointer flex justify-between items-center hover:bg-[var(--bg-2)]"
                   >
