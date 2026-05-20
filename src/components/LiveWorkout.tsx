@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Routine, Exercise, TrackedSet, WorkoutLog } from '../types';
+import { Routine, Exercise, TrackedSet, WorkoutLog, BODY_PARTS } from '../types';
 import { useAuth } from '../AuthContext';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -48,6 +48,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [addModalBodyPart, setAddModalBodyPart] = useState<string>('');
   const [filterByBodyPart, setFilterByBodyPart] = useState(!!routine.bodyPart);
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
   const [showCalorieModal, setShowCalorieModal] = useState(false);
@@ -202,8 +203,9 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
     setExercises(newEx);
   };
 
-  const addExercise = (name: string, fromHistory?: {sets: TrackedSet[], type?: 'strength' | 'cardio', duration?: number, distance?: number, unit?: string}, explicitType?: 'strength' | 'cardio') => {
+  const addExercise = (name: string, fromHistory?: {sets: TrackedSet[], type?: 'strength' | 'cardio', duration?: number, distance?: number, unit?: string, bodyPart?: string}, explicitType?: 'strength' | 'cardio', bodyPart?: string) => {
     const isCardio = explicitType === 'cardio' || fromHistory?.type === 'cardio';
+    const resolvedBodyPart = bodyPart || fromHistory?.bodyPart || (isCardio ? 'Cardio' : undefined);
     
     if (isCardio) {
       setExercises([...exercises, {
@@ -211,7 +213,8 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
         type: 'cardio',
         duration: fromHistory?.duration || 30,
         distance: fromHistory?.distance || 0,
-        completed: false
+        completed: false,
+        bodyPart: resolvedBodyPart
       }]);
     } else {
       const historyWeight = fromHistory ? (fromHistory.sets[0]?.weight || 0) : 0;
@@ -224,11 +227,13 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
         sets: fromHistory ? fromHistory.sets.length : 1,
         reps: fromHistory ? (fromHistory.sets[0]?.reps || 10) : 10,
         weight: convertedWeight,
-        trackedSets: fromHistory && fromHistory.sets.length > 0 ? fromHistory.sets.map(s => ({...s, weight: 0, completed: false})) : [{ reps: 10, weight: 0, completed: false }]
+        trackedSets: fromHistory && fromHistory.sets.length > 0 ? fromHistory.sets.map(s => ({...s, weight: 0, completed: false})) : [{ reps: 10, weight: 0, completed: false }],
+        bodyPart: resolvedBodyPart
       }]);
     }
     setShowAddModal(false);
     setSearchQuery('');
+    setAddModalBodyPart('');
   };
 
   const handleUnitChange = (newUnit: 'lbs' | 'kgs') => {
@@ -612,7 +617,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
 
             {/* Add exercise button */}
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => { setShowAddModal(true); setAddModalBodyPart(''); }}
               className="w-full py-3.5 border border-dashed border-[var(--border-2)] bg-transparent text-[var(--muted)] rounded-[var(--radius)] font-sans text-[12px] font-medium cursor-pointer flex items-center justify-center gap-2 transition-colors hover:border-[var(--muted)]"
             >
               <Plus className="w-3.5 h-3.5" /> Add Exercise
@@ -639,7 +644,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
             {/* Header */}
             <div className="px-[18px] py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
               <h3 className="text-sm font-bold text-[var(--white)] tracking-tight">Add Exercise</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-[var(--muted)] hover:text-white transition-colors bg-transparent border-none cursor-pointer">
+              <button onClick={() => { setShowAddModal(false); setAddModalBodyPart(''); }} className="text-[var(--muted)] hover:text-white transition-colors bg-transparent border-none cursor-pointer">
                 <X className="w-[15px] h-[15px]" />
               </button>
             </div>
@@ -669,19 +674,33 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                 </label>
               )}
             </div>
+            <div className="px-[18px] py-2.5 border-b border-[var(--border)] shrink-0">
+              <select
+                value={addModalBodyPart}
+                onChange={(e) => setAddModalBodyPart(e.target.value)}
+                className="w-full bg-[var(--bg-2)] border border-[var(--border-2)] rounded-[var(--radius-sm)] px-3 py-2.5 text-[13px] text-[var(--white)] outline-none focus:border-[var(--red)]"
+              >
+                <option value="">Select body part…</option>
+                {BODY_PARTS.map(bp => (
+                  <option key={bp} value={bp}>{bp}</option>
+                ))}
+              </select>
+            </div>
             {/* Results */}
             <div className="flex-1 overflow-y-auto p-2">
               {searchQuery.trim() !== '' && (
                 <>
                   <button
-                    onClick={() => addExercise(searchQuery, undefined, 'strength')}
-                    className="w-full text-left px-3 py-2.5 rounded-[var(--radius-sm)] text-[11px] font-semibold text-[var(--red)] bg-transparent border-none cursor-pointer flex items-center gap-2 hover:bg-[var(--bg-2)]"
+                    onClick={() => addModalBodyPart && addExercise(searchQuery, undefined, 'strength', addModalBodyPart)}
+                    disabled={!addModalBodyPart}
+                    className="w-full text-left px-3 py-2.5 rounded-[var(--radius-sm)] text-[11px] font-semibold text-[var(--red)] bg-transparent border-none cursor-pointer flex items-center gap-2 hover:bg-[var(--bg-2)] disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Plus className="w-3 h-3" /> "{searchQuery}" — Create as Strength
                   </button>
                   <button
-                    onClick={() => addExercise(searchQuery, undefined, 'cardio')}
-                    className="w-full text-left px-3 py-2.5 rounded-[var(--radius-sm)] text-[11px] font-semibold text-[var(--red)] bg-transparent border-none cursor-pointer flex items-center gap-2 hover:bg-[var(--bg-2)]"
+                    onClick={() => addModalBodyPart && addExercise(searchQuery, undefined, 'cardio', addModalBodyPart)}
+                    disabled={!addModalBodyPart}
+                    className="w-full text-left px-3 py-2.5 rounded-[var(--radius-sm)] text-[11px] font-semibold text-[var(--red)] bg-transparent border-none cursor-pointer flex items-center gap-2 hover:bg-[var(--bg-2)] disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Plus className="w-3 h-3" /> "{searchQuery}" — Create as Cardio
                   </button>
@@ -695,8 +714,9 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                 .map((hist) => (
                   <button
                     key={hist.name}
-                    onClick={() => addExercise(hist.name, hist)}
-                    className="w-full text-left px-3 py-2.5 rounded-[var(--radius-sm)] text-[12px] font-medium text-[var(--text)] bg-transparent border-none cursor-pointer flex justify-between items-center hover:bg-[var(--bg-2)]"
+                    onClick={() => addModalBodyPart && addExercise(hist.name, hist, undefined, addModalBodyPart)}
+                    disabled={!addModalBodyPart}
+                    className="w-full text-left px-3 py-2.5 rounded-[var(--radius-sm)] text-[12px] font-medium text-[var(--text)] bg-transparent border-none cursor-pointer flex justify-between items-center hover:bg-[var(--bg-2)] disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <span>{hist.name} <span className="font-mono text-[9px] text-[var(--muted)] ml-1.5">{hist.sets.length} sets prev.</span></span>
                     {hist.bodyPart && <span className="font-mono text-[9px] text-[var(--muted)] bg-[var(--bg-2)] border border-[var(--border)] px-2 py-0.5 rounded-full">{hist.bodyPart}</span>}
