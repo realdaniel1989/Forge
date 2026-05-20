@@ -10,6 +10,8 @@ import { handleFirestoreError, OperationType } from '../firestoreUtils';
 
 const BATCH_SIZE = 498;
 
+type FirestoreExercise = Record<string, unknown>;
+
 export function useExerciseLibrary() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<ExerciseEntry[]>([]);
@@ -107,8 +109,6 @@ export function useExerciseLibrary() {
   ): Promise<void> => {
     if (!user) throw new Error('Not authenticated');
 
-    type FirestoreExercise = Record<string, unknown>;
-
     const applyRetag = (exs: FirestoreExercise[]): FirestoreExercise[] =>
       exs.map(ex =>
         normalizeExerciseName(String(ex.name ?? '')) === secondary.nameKey
@@ -125,6 +125,9 @@ export function useExerciseLibrary() {
     const logsSnap = await getDocs(
       query(collection(db, 'workoutLogs'), where('userId', '==', user.uid), limit(500))
     );
+    if (logsSnap.size === 500) {
+      console.warn('useExerciseLibrary: workoutLogs result hit limit(500) — some logs may not be retagged');
+    }
     logsSnap.forEach(logDoc => {
       const exs = (logDoc.data().exercises ?? []) as FirestoreExercise[];
       if (hasSecondary(exs)) updates.push({ ref: logDoc.ref, exercises: applyRetag(exs) });
@@ -133,6 +136,9 @@ export function useExerciseLibrary() {
     const routinesSnap = await getDocs(
       query(collection(db, 'routines'), where('userId', '==', user.uid), limit(500))
     );
+    if (routinesSnap.size === 500) {
+      console.warn('useExerciseLibrary: routines result hit limit(500) — some routines may not be retagged');
+    }
     routinesSnap.forEach(routineDoc => {
       const exs = (routineDoc.data().exercises ?? []) as FirestoreExercise[];
       if (hasSecondary(exs)) updates.push({ ref: routineDoc.ref, exercises: applyRetag(exs) });
@@ -140,22 +146,28 @@ export function useExerciseLibrary() {
 
     // Chunk into batches of BATCH_SIZE, final batch includes the library delete
     const chunks: typeof updates[] = [];
-    for (let i = 0; i < updates.length || chunks.length === 0; i += BATCH_SIZE) {
+    for (let i = 0; i < updates.length; i += BATCH_SIZE) {
       chunks.push(updates.slice(i, i + BATCH_SIZE));
     }
+    if (chunks.length === 0) chunks.push([]);
 
-    for (let ci = 0; ci < chunks.length; ci++) {
-      const batch = writeBatch(db);
-      for (const u of chunks[ci]) {
-        batch.update(u.ref, { exercises: u.exercises });
+    try {
+      for (let ci = 0; ci < chunks.length; ci++) {
+        const batch = writeBatch(db);
+        for (const u of chunks[ci]) {
+          batch.update(u.ref, { exercises: u.exercises });
+        }
+        if (ci === chunks.length - 1) {
+          batch.delete(doc(db, 'exerciseLibrary', secondary.id));
+        }
+        await batch.commit();
       }
-      if (ci === chunks.length - 1) {
-        batch.delete(doc(db, 'exerciseLibrary', secondary.id));
-      }
-      await batch.commit();
+      setEntries(prev => prev.filter(e => e.id !== secondary.id));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, 'exerciseLibrary/merge');
+      setError('Merge failed. No changes may have been saved.');
+      throw e;
     }
-
-    setEntries(prev => prev.filter(e => e.id !== secondary.id));
   }, [user]);
 
   return { entries, loading, error, addToLibrary, updateBodyPart, mergeExercises };
