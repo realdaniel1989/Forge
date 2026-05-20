@@ -35,7 +35,7 @@ export const ProgressView: React.FC = () => {
       }
     };
     fetchLogs();
-  }, [user]);
+  }, [user?.uid]);
 
   const handleDeleteWorkout = async (logId: string) => {
     if (!user || deleting) return;

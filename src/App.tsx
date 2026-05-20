@@ -35,7 +35,7 @@ const MainView = () => {
   return (
     <Layout currentTab={tab} setTab={changeTab}>
       {mountedTabs.has('routines') && (
-        <div style={{ display: tab === 'routines' ? 'contents' : 'none' }}>
+        <div style={{ display: tab === 'routines' ? 'contents' : 'none' }} aria-hidden={tab !== 'routines'} inert={tab !== 'routines' ? ('' as unknown as boolean) : undefined}>
           <RoutinesList
             onStartWorkout={setActiveWorkout}
             onCreateCustom={() => changeTab('custom')}
@@ -44,12 +44,12 @@ const MainView = () => {
         </div>
       )}
       {mountedTabs.has('generate') && (
-        <div style={{ display: tab === 'generate' ? 'contents' : 'none' }}>
+        <div style={{ display: tab === 'generate' ? 'contents' : 'none' }} aria-hidden={tab !== 'generate'} inert={tab !== 'generate' ? ('' as unknown as boolean) : undefined}>
           <RoutineGenerator onRoutineSaved={() => changeTab('routines')} />
         </div>
       )}
       {mountedTabs.has('custom') && (
-        <div style={{ display: tab === 'custom' ? 'contents' : 'none' }}>
+        <div style={{ display: tab === 'custom' ? 'contents' : 'none' }} aria-hidden={tab !== 'custom'} inert={tab !== 'custom' ? ('' as unknown as boolean) : undefined}>
           <CustomRoutineBuilder
             onCancel={() => changeTab('routines')}
             onSave={() => changeTab('routines')}
@@ -57,7 +57,7 @@ const MainView = () => {
         </div>
       )}
       {mountedTabs.has('progress') && (
-        <div style={{ display: tab === 'progress' ? 'contents' : 'none' }}>
+        <div style={{ display: tab === 'progress' ? 'contents' : 'none' }} aria-hidden={tab !== 'progress'} inert={tab !== 'progress' ? ('' as unknown as boolean) : undefined}>
           <ProgressView />
         </div>
       )}
