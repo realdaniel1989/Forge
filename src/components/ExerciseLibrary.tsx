@@ -285,6 +285,7 @@ export const ExerciseLibrary: React.FC = () => {
               <div className="flex gap-2 mt-1">
                 <button
                   onClick={() => setShowAddModal(false)}
+                  disabled={addSaving}
                   className="flex-1 py-2.5 rounded-full border border-[var(--hairline-2)] text-[var(--stone)] text-[12px] font-bold uppercase tracking-[.06em] cursor-pointer bg-transparent hover:border-[var(--ash)] transition-colors"
                 >
                   Cancel
