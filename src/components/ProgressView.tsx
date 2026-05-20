@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, doc, deleteDoc, updateDoc, limit } f
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { useAuth } from '../AuthContext';
-import { WorkoutLog } from '../types';
+import { WorkoutLog, BODY_PARTS } from '../types';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks } from 'date-fns';
 import { X, Trash2, Pencil } from 'lucide-react';
 
@@ -73,23 +73,28 @@ export const ProgressView: React.FC = () => {
   daysInWeek.forEach(day => {
     const dayLogs = logs.filter(log => isSameDay(new Date(log.date), day));
     dayLogs.forEach(log => {
-      let sets = 0, cardioMins = 0;
       log.exercises.forEach(ex => {
+        // Resolve body part: exercise-level > workout-level fallback > skip
+        const bp = ex.bodyPart || log.bodyPart;
+        if (!bp) return;
+
         if (ex.type === 'cardio') {
-          if (ex.completed || (!Object.prototype.hasOwnProperty.call(ex, 'completed') && ex.duration)) {
-            cardioMins += ex.duration || 0;
+          const isDone = ex.completed || (!Object.prototype.hasOwnProperty.call(ex, 'completed') && ex.duration);
+          if (isDone && ex.duration) {
+            weeklySummary[bp] = (weeklySummary[bp] || 0) + ex.duration;
           }
         } else {
+          let sets = 0;
           if (ex.trackedSets?.length) {
-            sets += ex.trackedSets.filter(s => s.completed).length;
+            sets = ex.trackedSets.filter(s => s.completed).length;
           } else {
-            sets += ex.actualSets || 0;
+            sets = ex.actualSets || 0;
+          }
+          if (sets > 0) {
+            weeklySummary[bp] = (weeklySummary[bp] || 0) + sets;
           }
         }
       });
-      const part = log.bodyPart ? log.bodyPart.toUpperCase() : 'MIXED';
-      if (sets > 0) { weeklySummary[part] = (weeklySummary[part] || 0) + sets; }
-      if (cardioMins > 0) { weeklySummary['CARDIO (MIN)'] = (weeklySummary['CARDIO (MIN)'] || 0) + cardioMins; }
     });
   });
 
@@ -361,12 +366,16 @@ export const ProgressView: React.FC = () => {
             ) : (
               Object.entries(weeklySummary)
                 .sort((a, b) => b[1] - a[1])
-                .map(([part, val]) => (
-                  <tr key={part} className="border-b border-[var(--hairline)] hover:bg-[var(--surface)] transition-colors">
-                    <td className="py-3 px-5 font-semibold uppercase text-[var(--ink)]" style={condensed}>{part}</td>
-                    <td className="py-3 px-5 font-bold text-[var(--action)] text-right" style={condensed}>{val}</td>
-                  </tr>
-                ))
+                .map(([part, val]) => {
+                  const lowerPart = part.toLowerCase();
+                  const isCardioEntry = lowerPart === 'cardio';
+                  return (
+                    <tr key={part} className="border-b border-[var(--hairline)] hover:bg-[var(--surface)] transition-colors">
+                      <td className="py-3 px-5 font-semibold uppercase text-[var(--ink)]" style={condensed}>{part}</td>
+                      <td className="py-3 px-5 font-bold text-[var(--action)] text-right" style={condensed}>{val} {isCardioEntry ? 'min' : 'sets'}</td>
+                    </tr>
+                  );
+                })
             )}
           </tbody>
         </table>
