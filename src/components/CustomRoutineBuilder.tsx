@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Exercise } from '../types';
+import { Exercise, BODY_PARTS } from '../types';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
@@ -16,9 +16,9 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
 
   const addExercise = (type: 'strength' | 'cardio') => {
     if (type === 'strength') {
-      setExercises([...exercises, { name: '', sets: 3, reps: 10, weight: 0, type: 'strength' }]);
+      setExercises([...exercises, { name: '', sets: 3, reps: 10, weight: 0, type: 'strength', bodyPart: undefined }]);
     } else {
-      setExercises([...exercises, { name: '', type: 'cardio', duration: 30, distance: 0 }]);
+      setExercises([...exercises, { name: '', type: 'cardio', duration: 30, distance: 0, bodyPart: 'Cardio' }]);
     }
   };
 
@@ -34,12 +34,14 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
 
   const saveRoutine = async () => {
     if (!user || !name.trim() || exercises.length === 0) return;
+    const validExercises = exercises.filter(e => e.name.trim() !== '');
+    if (!validExercises.every(e => e.bodyPart)) return;
     setSaving(true);
     try {
       await addDoc(collection(db, 'routines'), {
         userId: user.uid,
         name: name.trim(),
-        exercises: exercises.filter(e => e.name.trim() !== ''),
+        exercises: validExercises,
         createdAt: Date.now(),
       });
       onSave();
@@ -145,6 +147,20 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
                   />
                 </div>
 
+                <div className="w-28">
+                  <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-1.5" style={condensed}>Body Part</label>
+                  <select
+                    value={ex.bodyPart || ''}
+                    onChange={e => updateExercise(idx, 'bodyPart', e.target.value || undefined)}
+                    className="w-full bg-[var(--canvas)] border border-[var(--hairline-2)] rounded-lg px-2 py-2.5 text-[13px] text-[var(--ink)] outline-none transition-colors focus:border-[var(--ash)]"
+                  >
+                    <option value="" disabled>Select</option>
+                    {BODY_PARTS.map(bp => (
+                      <option key={bp} value={bp}>{bp}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {ex.type === 'cardio' ? (
                   <>
                     <div className="w-16">
@@ -184,7 +200,7 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
       {/* ── SAVE BUTTON ── */}
       <button
         onClick={saveRoutine}
-        disabled={saving || !name.trim() || exercises.length === 0}
+        disabled={saving || !name.trim() || exercises.length === 0 || !exercises.filter(e => e.name.trim() !== '').every(e => e.bodyPart)}
         className="w-full py-[14px] rounded-full bg-[var(--action)] text-white border-none text-[14px] font-semibold uppercase tracking-[0.08em] cursor-pointer hover:bg-[var(--action-hover)] transition-colors disabled:opacity-40"
         style={condensed}
       >
