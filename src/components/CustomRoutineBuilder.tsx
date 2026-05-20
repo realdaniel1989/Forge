@@ -148,11 +148,11 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
                 </div>
 
                 <div className="w-28">
-                  <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-1.5" style={condensed}>Body Part</label>
+                  <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-1.5" style={condensed}>Body Part *</label>
                   <select
                     value={ex.bodyPart || ''}
                     onChange={e => updateExercise(idx, 'bodyPart', e.target.value || undefined)}
-                    className="w-full bg-[var(--canvas)] border border-[var(--hairline-2)] rounded-lg px-2 py-2.5 text-[13px] text-[var(--ink)] outline-none transition-colors focus:border-[var(--ash)]"
+                    className={`w-full bg-[var(--canvas)] border rounded-lg px-2 py-2.5 text-[13px] text-[var(--ink)] outline-none transition-colors focus:border-[var(--ash)] ${ex.name.trim() && !ex.bodyPart ? 'border-[var(--action)]' : 'border-[var(--hairline-2)]'}`}
                   >
                     <option value="" disabled>Select</option>
                     {BODY_PARTS.map(bp => (
@@ -198,14 +198,28 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
       </div>
 
       {/* ── SAVE BUTTON ── */}
-      <button
-        onClick={saveRoutine}
-        disabled={saving || !name.trim() || exercises.length === 0 || !exercises.filter(e => e.name.trim() !== '').every(e => e.bodyPart)}
-        className="w-full py-[14px] rounded-full bg-[var(--action)] text-white border-none text-[14px] font-semibold uppercase tracking-[0.08em] cursor-pointer hover:bg-[var(--action-hover)] transition-colors disabled:opacity-40"
-        style={condensed}
-      >
-        {saving ? 'Saving…' : 'Save Routine'}
-      </button>
+      {(() => {
+        const namedExercises = exercises.filter(e => e.name.trim() !== '');
+        const missingBodyPart = namedExercises.length > 0 && !namedExercises.every(e => e.bodyPart);
+        const disabled = saving || !name.trim() || exercises.length === 0 || missingBodyPart;
+        return (
+          <>
+            {missingBodyPart && (
+              <p className="text-[11px] text-[var(--action)] text-center mb-2 font-semibold uppercase tracking-[0.08em]" style={condensed}>
+                Select a body part for every exercise to save.
+              </p>
+            )}
+            <button
+              onClick={saveRoutine}
+              disabled={disabled}
+              className="w-full py-[14px] rounded-full bg-[var(--action)] text-white border-none text-[14px] font-semibold uppercase tracking-[0.08em] cursor-pointer hover:bg-[var(--action-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              style={condensed}
+            >
+              {saving ? 'Saving…' : 'Save Routine'}
+            </button>
+          </>
+        );
+      })()}
     </div>
   );
 };

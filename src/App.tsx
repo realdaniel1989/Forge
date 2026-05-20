@@ -17,10 +17,16 @@ const MainView = () => {
   const [tab, setTab] = useState('routines');
   const [activeWorkout, setActiveWorkout] = useState<Routine | null>(null);
   const [mountedTabs, setMountedTabs] = useState<Set<string>>(new Set([tab]));
+  const [routinesRefreshKey, setRoutinesRefreshKey] = useState(0);
 
   const changeTab = (newTab: string) => {
     setTab(newTab);
     setMountedTabs(prev => prev.has(newTab) ? prev : new Set([...prev, newTab]));
+  };
+
+  const handleRoutineSaved = () => {
+    setRoutinesRefreshKey(k => k + 1);
+    changeTab('routines');
   };
 
   if (!user) return <Login />;
@@ -41,19 +47,20 @@ const MainView = () => {
             onStartWorkout={setActiveWorkout}
             onCreateCustom={() => changeTab('custom')}
             onGenerateAI={() => changeTab('generate')}
+            refreshKey={routinesRefreshKey}
           />
         </div>
       )}
       {mountedTabs.has('generate') && (
         <div style={{ display: tab === 'generate' ? 'contents' : 'none' }} aria-hidden={tab !== 'generate'} inert={tab !== 'generate' ? ('' as unknown as boolean) : undefined}>
-          <RoutineGenerator onRoutineSaved={() => changeTab('routines')} />
+          <RoutineGenerator onRoutineSaved={handleRoutineSaved} />
         </div>
       )}
       {mountedTabs.has('custom') && (
         <div style={{ display: tab === 'custom' ? 'contents' : 'none' }} aria-hidden={tab !== 'custom'} inert={tab !== 'custom' ? ('' as unknown as boolean) : undefined}>
           <CustomRoutineBuilder
             onCancel={() => changeTab('routines')}
-            onSave={() => changeTab('routines')}
+            onSave={handleRoutineSaved}
           />
         </div>
       )}

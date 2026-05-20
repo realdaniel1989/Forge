@@ -11,7 +11,8 @@ export const RoutinesList: React.FC<{
   onStartWorkout: (r: Routine) => void;
   onCreateCustom: () => void;
   onGenerateAI: () => void;
-}> = ({ onStartWorkout, onCreateCustom, onGenerateAI }) => {
+  refreshKey?: number;
+}> = ({ onStartWorkout, onCreateCustom, onGenerateAI, refreshKey = 0 }) => {
   const { user } = useAuth();
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +35,7 @@ export const RoutinesList: React.FC<{
     }
   }, [user]);
 
-  useEffect(() => { fetchRoutines(); }, [fetchRoutines]);
+  useEffect(() => { fetchRoutines(); }, [fetchRoutines, refreshKey]);
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
