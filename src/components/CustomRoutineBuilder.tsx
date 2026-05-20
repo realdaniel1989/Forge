@@ -47,10 +47,13 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
         exercises: validExercises,
         createdAt: Date.now(),
       });
-      for (const ex of validExercises) {
-        await addToLibrary(ex.name, ex.bodyPart as BodyPart, (ex.type ?? 'strength') as 'strength' | 'cardio');
-      }
-      onSave();
+      onSave(); // dismiss form immediately — routine is saved
+      // best-effort library sync; never blocks or fails the save
+      Promise.allSettled(
+        validExercises.map(ex =>
+          addToLibrary(ex.name, ex.bodyPart as BodyPart, (ex.type ?? 'strength') as 'strength' | 'cardio')
+        )
+      );
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, 'routines');
     } finally {
@@ -158,9 +161,11 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
                   />
                   {activeSuggestionRow === idx && ex.name.trim().length > 0 && (() => {
                     const key = normalizeExerciseName(ex.name);
-                    const suggestions = libraryEntries
-                      .filter(e => e.type === ex.type && e.nameKey.includes(key) && e.nameKey !== key)
-                      .slice(0, 5);
+                    const suggestions = ex.name.trim().length >= 2
+                      ? libraryEntries
+                          .filter(e => e.type === ex.type && e.nameKey.includes(key) && e.nameKey !== key)
+                          .slice(0, 5)
+                      : [];
                     if (suggestions.length === 0) return null;
                     return (
                       <div className="absolute top-full left-0 right-0 z-20 bg-[var(--canvas)] border border-[var(--hairline-2)] rounded-lg mt-1 shadow-lg overflow-hidden">
