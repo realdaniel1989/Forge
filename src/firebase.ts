@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache } from 'firebase/firestore';
 
 const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -14,13 +14,13 @@ const firebaseConfig = {
 const firestoreDatabaseId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID;
 
 let app;
-let db: ReturnType<typeof getFirestore>;
+let db: ReturnType<typeof initializeFirestore>;
 let auth: ReturnType<typeof getAuth>;
 let initError: string | null = null;
 
 try {
   app = initializeApp(firebaseConfig);
-  db = getFirestore(app, firestoreDatabaseId);
+  db = initializeFirestore(app, { localCache: persistentLocalCache() }, firestoreDatabaseId);
   auth = getAuth(app);
 } catch (e) {
   initError = e instanceof Error ? e.message : String(e);
