@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   collection, query, where, getDocs,
-  addDoc, updateDoc, doc, writeBatch
+  addDoc, updateDoc, doc, writeBatch, limit
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../AuthContext';
 import { ExerciseEntry, BodyPart, normalizeExerciseName } from '../types';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
+
+const BATCH_SIZE = 498;
 
 export function useExerciseLibrary() {
   const { user } = useAuth();
@@ -15,7 +17,10 @@ export function useExerciseLibrary() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchEntries = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -45,15 +50,23 @@ export function useExerciseLibrary() {
   ): Promise<void> => {
     if (!user || !name.trim()) return;
     const nameKey = normalizeExerciseName(name);
-    if (entries.some(e => e.nameKey === nameKey)) return;
+    // Use a ref-check approach: attempt write only if not already present
+    let shouldWrite = false;
+    setEntries(prev => {
+      if (prev.some(e => e.nameKey === nameKey)) return prev;
+      shouldWrite = true;
+      return prev;
+    });
+    if (!shouldWrite) return;
     try {
+      const createdAt = Date.now();
       const docRef = await addDoc(collection(db, 'exerciseLibrary'), {
         userId: user.uid,
         name: name.trim(),
         nameKey,
         bodyPart,
         type,
-        createdAt: Date.now(),
+        createdAt,
       });
       const newEntry: ExerciseEntry = {
         id: docRef.id,
@@ -62,7 +75,7 @@ export function useExerciseLibrary() {
         nameKey,
         bodyPart,
         type,
-        createdAt: Date.now(),
+        createdAt,
       };
       setEntries(prev =>
         prev.some(e => e.nameKey === nameKey)
@@ -71,8 +84,9 @@ export function useExerciseLibrary() {
       );
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, 'exerciseLibrary');
+      setError('Failed to add exercise to library');
     }
-  }, [user, entries]);
+  }, [user]); // no 'entries' dependency — reads prev inside updater
 
   const updateBodyPart = useCallback(async (id: string, newBodyPart: BodyPart): Promise<void> => {
     // Optimistic update
@@ -93,46 +107,54 @@ export function useExerciseLibrary() {
   ): Promise<void> => {
     if (!user) throw new Error('Not authenticated');
 
-    const batch = writeBatch(db);
+    type FirestoreExercise = Record<string, unknown>;
 
-    // Retag workoutLogs
+    const applyRetag = (exs: FirestoreExercise[]): FirestoreExercise[] =>
+      exs.map(ex =>
+        normalizeExerciseName(String(ex.name ?? '')) === secondary.nameKey
+          ? { ...ex, name: primary.name, bodyPart: primary.bodyPart }
+          : ex
+      );
+
+    const hasSecondary = (exs: FirestoreExercise[]) =>
+      exs.some(ex => normalizeExerciseName(String(ex.name ?? '')) === secondary.nameKey);
+
+    // Collect all docs to update
+    const updates: Array<{ ref: import('firebase/firestore').DocumentReference; exercises: FirestoreExercise[] }> = [];
+
     const logsSnap = await getDocs(
-      query(collection(db, 'workoutLogs'), where('userId', '==', user.uid))
+      query(collection(db, 'workoutLogs'), where('userId', '==', user.uid), limit(500))
     );
     logsSnap.forEach(logDoc => {
-      const exs = (logDoc.data().exercises ?? []) as Array<Record<string, unknown>>;
-      if (exs.some(ex => normalizeExerciseName(String(ex.name ?? '')) === secondary.nameKey)) {
-        batch.update(logDoc.ref, {
-          exercises: exs.map(ex =>
-            normalizeExerciseName(String(ex.name ?? '')) === secondary.nameKey
-              ? { ...ex, name: primary.name, bodyPart: primary.bodyPart }
-              : ex
-          ),
-        });
-      }
+      const exs = (logDoc.data().exercises ?? []) as FirestoreExercise[];
+      if (hasSecondary(exs)) updates.push({ ref: logDoc.ref, exercises: applyRetag(exs) });
     });
 
-    // Retag routines
     const routinesSnap = await getDocs(
-      query(collection(db, 'routines'), where('userId', '==', user.uid))
+      query(collection(db, 'routines'), where('userId', '==', user.uid), limit(500))
     );
     routinesSnap.forEach(routineDoc => {
-      const exs = (routineDoc.data().exercises ?? []) as Array<Record<string, unknown>>;
-      if (exs.some(ex => normalizeExerciseName(String(ex.name ?? '')) === secondary.nameKey)) {
-        batch.update(routineDoc.ref, {
-          exercises: exs.map(ex =>
-            normalizeExerciseName(String(ex.name ?? '')) === secondary.nameKey
-              ? { ...ex, name: primary.name, bodyPart: primary.bodyPart }
-              : ex
-          ),
-        });
-      }
+      const exs = (routineDoc.data().exercises ?? []) as FirestoreExercise[];
+      if (hasSecondary(exs)) updates.push({ ref: routineDoc.ref, exercises: applyRetag(exs) });
     });
 
-    // Delete secondary from library
-    batch.delete(doc(db, 'exerciseLibrary', secondary.id));
+    // Chunk into batches of BATCH_SIZE, final batch includes the library delete
+    const chunks: typeof updates[] = [];
+    for (let i = 0; i < updates.length || chunks.length === 0; i += BATCH_SIZE) {
+      chunks.push(updates.slice(i, i + BATCH_SIZE));
+    }
 
-    await batch.commit(); // throws on failure — caller catches
+    for (let ci = 0; ci < chunks.length; ci++) {
+      const batch = writeBatch(db);
+      for (const u of chunks[ci]) {
+        batch.update(u.ref, { exercises: u.exercises });
+      }
+      if (ci === chunks.length - 1) {
+        batch.delete(doc(db, 'exerciseLibrary', secondary.id));
+      }
+      await batch.commit();
+    }
+
     setEntries(prev => prev.filter(e => e.id !== secondary.id));
   }, [user]);
 
