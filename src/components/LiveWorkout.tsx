@@ -58,9 +58,12 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   });
 
   useEffect(() => {
-    try {
-      localStorage.setItem(draftKey, JSON.stringify({ exercises, unit, baseUnit: baseUnitRef.current }));
-    } catch {}
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ exercises, unit, baseUnit: baseUnitRef.current }));
+      } catch {}
+    }, 500);
+    return () => clearTimeout(timer);
   }, [exercises, unit]);
 
   useEffect(() => {
