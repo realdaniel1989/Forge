@@ -101,6 +101,26 @@ export const ProgressView: React.FC = () => {
   // Calorie chart helpers
   const now = Date.now();
   const msPerDay = 86_400_000;
+  const AMBER = '#F59E0B';
+
+  const isWorkoutCardio = (log: WorkoutLog) =>
+    (log.bodyPart || '').toLowerCase() === 'cardio';
+
+  interface DayWorkout {
+    id: string;
+    name: string;
+    calories: number;
+    isCardio: boolean;
+    date: number;
+  }
+
+  interface BarDay {
+    label: string;
+    date: Date;
+    calories: number;
+    workouts: DayWorkout[];
+  }
+
   const calorieLogs = (() => {
     if (dateRange === 'week') {
       return logs.filter(l => l.calories != null && l.date >= weekStart.getTime() && l.date <= weekEnd.getTime());
@@ -115,16 +135,50 @@ export const ProgressView: React.FC = () => {
   const avgCalories = calorieLogs.length > 0 ? Math.round(totalCalories / calorieLogs.length) : 0;
   const maxCalories = calorieLogs.length > 0 ? Math.max(...calorieLogs.map(l => l.calories || 0)) : 0;
 
-  const barDays: { label: string; date: Date; calories: number }[] = (() => {
-    const days: { label: string; date: Date; calories: number }[] = [];
+  const barDays: BarDay[] = (() => {
+    const days: BarDay[] = [];
     const count = dateRange === 'week' ? 7 : dateRange === '30days' ? 30 : Math.min(90, Math.ceil((now - (logs[0]?.date || now)) / msPerDay) + 1);
     for (let i = count - 1; i >= 0; i--) {
       const d = new Date(now - i * msPerDay);
       const dayLogs = logs.filter(l => l.calories != null && isSameDay(new Date(l.date), d));
       const cal = dayLogs.reduce((s, l) => s + (l.calories || 0), 0);
-      days.push({ label: format(d, dateRange === 'week' ? 'EEE' : 'd'), date: d, calories: cal });
+      const workouts: DayWorkout[] = dayLogs.map(l => ({
+        id: l.id || '',
+        name: l.name,
+        calories: l.calories || 0,
+        isCardio: isWorkoutCardio(l),
+        date: l.date,
+      }));
+      days.push({ label: format(d, dateRange === 'week' ? 'EEE' : 'd'), date: d, calories: cal, workouts });
     }
     return days;
+  })();
+
+  // Stats for 30-day / all-time views
+  const extendedStats = (() => {
+    if (dateRange === 'week') return null;
+    const rangeLabel = dateRange === '30days' ? '30 Days' : 'All Time';
+    const daysWithCal = barDays.filter(d => d.calories > 0);
+    const avgPerDay = daysWithCal.length > 0 ? Math.round(totalCalories / daysWithCal.length) : 0;
+
+    // Best day (highest total calories)
+    const bestDay = daysWithCal.length > 0
+      ? daysWithCal.reduce((best, d) => d.calories > best.calories ? d : best, daysWithCal[0])
+      : null;
+
+    // Best strength session
+    const strengthSessions = calorieLogs.filter(l => !isWorkoutCardio(l) && (l.calories || 0) > 0);
+    const bestStrength = strengthSessions.length > 0
+      ? strengthSessions.reduce((best, l) => (l.calories || 0) > (best.calories || 0) ? l : best, strengthSessions[0])
+      : null;
+
+    // Best cardio session
+    const cardioSessions = calorieLogs.filter(l => isWorkoutCardio(l) && (l.calories || 0) > 0);
+    const bestCardio = cardioSessions.length > 0
+      ? cardioSessions.reduce((best, l) => (l.calories || 0) > (best.calories || 0) ? l : best, cardioSessions[0])
+      : null;
+
+    return { rangeLabel, avgPerDay, bestDay, bestStrength, bestCardio };
   })();
 
   const handleCalorieEdit = async (logId: string) => {
@@ -203,44 +257,218 @@ export const ProgressView: React.FC = () => {
         </div>
         {calorieLogs.length > 0 && (
           <>
-            <div className="px-5 pt-4 pb-2 overflow-x-auto">
-              <svg
-                width={Math.max(barDays.length * 20, 300)}
-                height={100}
-                viewBox={`0 0 ${Math.max(barDays.length * 20, 300)} 100`}
-                style={{ display: 'block', minWidth: '100%' }}
-              >
-                {barDays.map((d, i) => {
-                  const barH = maxCalories > 0 ? Math.round((d.calories / maxCalories) * 72) : 0;
-                  const x = i * (Math.max(barDays.length * 20, 300) / barDays.length);
-                  const barW = Math.max((Math.max(barDays.length * 20, 300) / barDays.length) - 4, 4);
-                  return (
-                    <g key={d.label + i}>
-                      {d.calories > 0 ? (
-                        <rect x={x + 2} y={80 - barH} width={barW} height={barH} rx={2} fill="var(--action)" opacity={0.85} />
-                      ) : (
-                        <rect x={x + 2} y={8} width={barW} height={72} rx={2} fill="none" stroke="var(--hairline-2)" strokeDasharray="3 2" />
-                      )}
-                      <text x={x + barW / 2 + 2} y={96} textAnchor="middle" fontSize={8} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">
-                        {d.label}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-            <div className="grid grid-cols-3 border-t border-[var(--hairline)]">
-              {[
-                { label: 'Total', value: `${totalCalories.toLocaleString()} kcal` },
-                { label: 'Avg / Session', value: `${avgCalories.toLocaleString()} kcal` },
-                { label: 'Best Session', value: `${maxCalories.toLocaleString()} kcal` },
-              ].map((stat, i) => (
-                <div key={stat.label} className={`px-5 py-3 ${i < 2 ? 'border-r border-[var(--hairline)]' : ''}`}>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-0.5" style={condensed}>{stat.label}</p>
-                  <p className="text-[16px] font-black text-[var(--action)]" style={condensed}>{stat.value}</p>
+            {dateRange === 'week' ? (
+              /* ── WEEKLY VIEW: Stacked bars with labels ── */
+              <>
+                <div className="px-5 pt-4 pb-2 overflow-x-auto">
+                  <svg
+                    width={Math.max(barDays.length * 60, 420)}
+                    height={160}
+                    viewBox={`0 0 ${Math.max(barDays.length * 60, 420)} 160`}
+                    style={{ display: 'block', minWidth: '100%' }}
+                  >
+                    {barDays.map((d, i) => {
+                      const svgW = Math.max(barDays.length * 60, 420);
+                      const colW = svgW / barDays.length;
+                      const barW = Math.max(colW - 12, 12);
+                      const barX = i * colW + (colW - barW) / 2;
+                      const maxBarH = 100;
+                      const baseline = 130;
+
+                      if (d.calories === 0) {
+                        return (
+                          <g key={d.label + i}>
+                            <rect x={barX} y={baseline - maxBarH} width={barW} height={maxBarH} rx={3} fill="none" stroke="var(--hairline-2)" strokeDasharray="3 2" />
+                            <text x={barX + barW / 2} y={148} textAnchor="middle" fontSize={9} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">
+                              {d.label}
+                            </text>
+                          </g>
+                        );
+                      }
+
+                      // Build stacked segments
+                      const segments = d.workouts.map(w => ({
+                        cal: w.calories,
+                        isCardio: w.isCardio,
+                        h: maxBarH * (w.calories / maxCalories),
+                      }));
+                      const gap = segments.length > 1 ? 2 : 0;
+                      const totalGap = gap * (segments.length - 1);
+                      const scale = (maxBarH - totalGap) / (maxBarH);
+
+                      let cursor = baseline;
+                      const rects: { y: number; h: number; color: string; label: string }[] = [];
+                      segments.forEach(seg => {
+                        const h = seg.h * scale;
+                        cursor -= h;
+                        rects.push({ y: cursor, h, color: seg.isCardio ? AMBER : 'var(--action)', label: String(seg.cal) });
+                        cursor -= gap;
+                      });
+
+                      return (
+                        <g key={d.label + i}>
+                          {rects.map((r, ri) => (
+                            <g key={ri}>
+                              <rect x={barX} y={r.y} width={barW} height={r.h} rx={ri === 0 ? 3 : 0} fill={r.color} opacity={0.85} />
+                              {r.h >= 14 && (
+                                <text x={barX + barW / 2} y={r.y + r.h / 2 + 4} textAnchor="middle" fontSize={9} fontWeight="bold" fill="white" fontFamily="'Barlow Condensed', sans-serif">
+                                  {r.label}
+                                </text>
+                              )}
+                            </g>
+                          ))}
+                          {/* Total above bar */}
+                          <text x={barX + barW / 2} y={rects[0].y - 5} textAnchor="middle" fontSize={10} fontWeight="bold" fill="var(--ink)" fontFamily="'Barlow Condensed', sans-serif">
+                            {d.calories}
+                          </text>
+                          <text x={barX + barW / 2} y={148} textAnchor="middle" fontSize={9} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">
+                            {d.label}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
                 </div>
-              ))}
-            </div>
+                {/* Legend */}
+                <div className="flex items-center justify-center gap-6 pb-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-[var(--action)] opacity-85" />
+                    <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--stone)]" style={condensed}>Strength</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: AMBER, opacity: 0.85 }} />
+                    <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--stone)]" style={condensed}>Cardio</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 border-t border-[var(--hairline)]">
+                  {[
+                    { label: 'Total', value: `${totalCalories.toLocaleString()} kcal` },
+                    { label: 'Avg / Session', value: `${avgCalories.toLocaleString()} kcal` },
+                    { label: 'Best Session', value: `${maxCalories.toLocaleString()} kcal` },
+                  ].map((stat, i) => (
+                    <div key={stat.label} className={`px-5 py-3 ${i < 2 ? 'border-r border-[var(--hairline)]' : ''}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-0.5" style={condensed}>{stat.label}</p>
+                      <p className="text-[16px] font-black text-[var(--action)]" style={condensed}>{stat.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              /* ── 30-DAY / ALL-TIME VIEW: Simple bars + extended stats ── */
+              <>
+                <div className="px-5 pt-4 pb-2 overflow-x-auto">
+                  <svg
+                    width={Math.max(barDays.length * 20, 300)}
+                    height={100}
+                    viewBox={`0 0 ${Math.max(barDays.length * 20, 300)} 100`}
+                    style={{ display: 'block', minWidth: '100%' }}
+                  >
+                    {barDays.map((d, i) => {
+                      const svgW = Math.max(barDays.length * 20, 300);
+                      const colW = svgW / barDays.length;
+                      const barW = Math.max(colW - 4, 4);
+                      const barX = i * colW + (colW - barW) / 2;
+
+                      if (d.calories === 0) {
+                        return (
+                          <g key={d.label + i}>
+                            <rect x={barX} y={8} width={barW} height={72} rx={2} fill="none" stroke="var(--hairline-2)" strokeDasharray="3 2" />
+                            <text x={barX + barW / 2} y={96} textAnchor="middle" fontSize={8} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">
+                              {d.label}
+                            </text>
+                          </g>
+                        );
+                      }
+
+                      // Split into cardio / strength portions
+                      const cardioCal = d.workouts.filter(w => w.isCardio).reduce((s, w) => s + w.calories, 0);
+                      const strengthCal = d.calories - cardioCal;
+                      const baseline = 80;
+                      const maxBarH = 72;
+
+                      const strengthH = maxCalories > 0 ? Math.round((strengthCal / maxCalories) * maxBarH) : 0;
+                      const cardioH = maxCalories > 0 ? Math.round((cardioCal / maxCalories) * maxBarH) : 0;
+
+                      return (
+                        <g key={d.label + i}>
+                          {strengthH > 0 && (
+                            <rect x={barX} y={baseline - strengthH} width={barW} height={strengthH} rx={2} fill="var(--action)" opacity={0.85} />
+                          )}
+                          {cardioH > 0 && (
+                            <rect x={barX} y={baseline - strengthH - cardioH} width={barW} height={cardioH} rx={strengthH === 0 ? 2 : 0} fill={AMBER} opacity={0.85} />
+                          )}
+                          <text x={barX + barW / 2} y={96} textAnchor="middle" fontSize={8} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">
+                            {d.label}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+                {/* Legend */}
+                <div className="flex items-center justify-center gap-6 pb-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-[var(--action)] opacity-85" />
+                    <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--stone)]" style={condensed}>Strength</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: AMBER, opacity: 0.85 }} />
+                    <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--stone)]" style={condensed}>Cardio</span>
+                  </div>
+                </div>
+                {/* Extended stats */}
+                {extendedStats && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 border-t border-[var(--hairline)]">
+                    <div className="px-5 py-3 border-r border-b sm:border-b-0 border-[var(--hairline)]">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-0.5" style={condensed}>Avg Cal / Day</p>
+                      <p className="text-[16px] font-black text-[var(--action)]" style={condensed}>{extendedStats.avgPerDay.toLocaleString()} kcal</p>
+                    </div>
+                    <div className="px-5 py-3 sm:border-r border-b sm:border-b-0 border-[var(--hairline)]">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-0.5" style={condensed}>Best Day</p>
+                      {extendedStats.bestDay ? (
+                        <button
+                          onClick={() => setCurrentDate(extendedStats.bestDay!.date)}
+                          className="text-[16px] font-black text-[var(--action)] hover:underline cursor-pointer bg-none border-none p-0"
+                          style={condensed}
+                        >
+                          {extendedStats.bestDay.calories.toLocaleString()} kcal
+                        </button>
+                      ) : (
+                        <p className="text-[16px] font-black text-[var(--action)]" style={condensed}>—</p>
+                      )}
+                    </div>
+                    <div className="px-5 py-3 border-r border-[var(--hairline)]">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-0.5" style={condensed}>Best Strength</p>
+                      {extendedStats.bestStrength ? (
+                        <button
+                          onClick={() => setCurrentDate(new Date(extendedStats.bestStrength!.date))}
+                          className="text-[16px] font-black text-[var(--action)] hover:underline cursor-pointer bg-none border-none p-0"
+                          style={condensed}
+                        >
+                          {(extendedStats.bestStrength.calories || 0).toLocaleString()} kcal
+                        </button>
+                      ) : (
+                        <p className="text-[16px] font-black text-[var(--action)]" style={condensed}>—</p>
+                      )}
+                    </div>
+                    <div className="px-5 py-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-0.5" style={condensed}>Best Cardio</p>
+                      {extendedStats.bestCardio ? (
+                        <button
+                          onClick={() => setCurrentDate(new Date(extendedStats.bestCardio!.date))}
+                          className="text-[16px] font-black hover:underline cursor-pointer bg-none border-none p-0"
+                          style={{ ...condensed, color: AMBER }}
+                        >
+                          {(extendedStats.bestCardio.calories || 0).toLocaleString()} kcal
+                        </button>
+                      ) : (
+                        <p className="text-[16px] font-black" style={{ ...condensed, color: AMBER }}>—</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </>
         )}
       </div>
