@@ -714,8 +714,8 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                 .map((hist) => (
                   <button
                     key={hist.name}
-                    onClick={() => addModalBodyPart && addExercise(hist.name, hist, undefined, addModalBodyPart)}
-                    disabled={!addModalBodyPart}
+                    onClick={() => (hist.bodyPart || addModalBodyPart) && addExercise(hist.name, hist, undefined, addModalBodyPart || undefined)}
+                    disabled={!hist.bodyPart && !addModalBodyPart}
                     className="w-full text-left px-3 py-2.5 rounded-[var(--radius-sm)] text-[12px] font-medium text-[var(--text)] bg-transparent border-none cursor-pointer flex justify-between items-center hover:bg-[var(--bg-2)] disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <span>{hist.name} <span className="font-mono text-[9px] text-[var(--muted)] ml-1.5">{hist.sets.length} sets prev.</span></span>
