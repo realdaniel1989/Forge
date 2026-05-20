@@ -69,3 +69,16 @@ export interface HabitLog {
   actual: number;
   createdAt: number;
 }
+
+export interface ExerciseEntry {
+  id: string;
+  userId: string;
+  name: string;
+  nameKey: string;
+  bodyPart: BodyPart;
+  type: 'strength' | 'cardio';
+  createdAt: number;
+}
+
+export const normalizeExerciseName = (name: string): string =>
+  name.trim().toLowerCase().replace(/\s+/g, '');
