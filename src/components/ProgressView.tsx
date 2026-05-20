@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, doc, deleteDoc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, deleteDoc, updateDoc, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { useAuth } from '../AuthContext';
 import { WorkoutLog } from '../types';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks } from 'date-fns';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Pencil } from 'lucide-react';
 
 const condensed: React.CSSProperties = { fontFamily: "'Barlow Condensed', sans-serif" };
 
@@ -16,6 +16,10 @@ export const ProgressView: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedWorkout, setSelectedWorkout] = useState<WorkoutLog | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [dateRange, setDateRange] = useState<'week' | '30days' | 'alltime'>('week');
+  const [editingCalorieId, setEditingCalorieId] = useState<string | null>(null);
+  const [calorieEditValue, setCalorieEditValue] = useState('');
+  const [calorieSaving, setCalorieSaving] = useState(false);
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -89,6 +93,50 @@ export const ProgressView: React.FC = () => {
     });
   });
 
+  // Calorie chart helpers
+  const now = Date.now();
+  const msPerDay = 86_400_000;
+  const calorieLogs = (() => {
+    if (dateRange === 'week') {
+      return logs.filter(l => l.calories != null && l.date >= weekStart.getTime() && l.date <= weekEnd.getTime());
+    }
+    if (dateRange === '30days') {
+      return logs.filter(l => l.calories != null && l.date >= now - 30 * msPerDay);
+    }
+    return logs.filter(l => l.calories != null);
+  })();
+
+  const totalCalories = calorieLogs.reduce((s, l) => s + (l.calories || 0), 0);
+  const avgCalories = calorieLogs.length > 0 ? Math.round(totalCalories / calorieLogs.length) : 0;
+  const maxCalories = calorieLogs.length > 0 ? Math.max(...calorieLogs.map(l => l.calories || 0)) : 0;
+
+  const barDays: { label: string; date: Date; calories: number }[] = (() => {
+    const days: { label: string; date: Date; calories: number }[] = [];
+    const count = dateRange === 'week' ? 7 : dateRange === '30days' ? 30 : Math.min(90, Math.ceil((now - (logs[0]?.date || now)) / msPerDay) + 1);
+    for (let i = count - 1; i >= 0; i--) {
+      const d = new Date(now - i * msPerDay);
+      const dayLogs = logs.filter(l => l.calories != null && isSameDay(new Date(l.date), d));
+      const cal = dayLogs.reduce((s, l) => s + (l.calories || 0), 0);
+      days.push({ label: format(d, dateRange === 'week' ? 'EEE' : 'd'), date: d, calories: cal });
+    }
+    return days;
+  })();
+
+  const handleCalorieEdit = async (logId: string) => {
+    const val = parseInt(calorieEditValue, 10);
+    if (isNaN(val) || val < 0) return;
+    setCalorieSaving(true);
+    try {
+      await updateDoc(doc(db, 'workoutLogs', logId), { calories: val });
+      setLogs(logs.map(l => l.id === logId ? { ...l, calories: val } : l));
+      setEditingCalorieId(null);
+    } catch(e) {
+      handleFirestoreError(e, OperationType.UPDATE, `workoutLogs/${logId}`);
+    } finally {
+      setCalorieSaving(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-0">
 
@@ -120,6 +168,73 @@ export const ProgressView: React.FC = () => {
             </svg>
           </button>
         </div>
+      </div>
+
+      {/* ── DATE RANGE TOGGLE ── */}
+      <div className="flex gap-1 mb-6 p-1 bg-[var(--surface)] border border-[var(--hairline)] rounded-lg w-fit">
+        {(['week', '30days', 'alltime'] as const).map(r => (
+          <button
+            key={r}
+            onClick={() => setDateRange(r)}
+            className={`px-4 py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-[0.06em] cursor-pointer transition-colors border-none
+              ${dateRange === r ? 'bg-[var(--canvas)] text-[var(--ink)] shadow-sm' : 'bg-none text-[var(--stone)] hover:text-[var(--ash)]'}`}
+            style={condensed}
+          >
+            {r === 'week' ? 'This Week' : r === '30days' ? 'Last 30 Days' : 'All Time'}
+          </button>
+        ))}
+      </div>
+
+      {/* ── CALORIE BAR CHART ── */}
+      <div className="border border-[var(--hairline)] rounded-lg overflow-hidden mb-6">
+        <div className="px-5 py-3.5 border-b border-[var(--hairline)] flex items-center justify-between">
+          <span className="text-[13px] font-semibold text-[var(--ink)]">Calories Burnt</span>
+          {calorieLogs.length === 0 && (
+            <span className="text-[11px] text-[var(--stone)]" style={condensed}>No calorie data in range</span>
+          )}
+        </div>
+        {calorieLogs.length > 0 && (
+          <>
+            <div className="px-5 pt-4 pb-2 overflow-x-auto">
+              <svg
+                width={Math.max(barDays.length * 20, 300)}
+                height={100}
+                viewBox={`0 0 ${Math.max(barDays.length * 20, 300)} 100`}
+                style={{ display: 'block', minWidth: '100%' }}
+              >
+                {barDays.map((d, i) => {
+                  const barH = maxCalories > 0 ? Math.round((d.calories / maxCalories) * 72) : 0;
+                  const x = i * (Math.max(barDays.length * 20, 300) / barDays.length);
+                  const barW = Math.max((Math.max(barDays.length * 20, 300) / barDays.length) - 4, 4);
+                  return (
+                    <g key={d.label + i}>
+                      {d.calories > 0 ? (
+                        <rect x={x + 2} y={80 - barH} width={barW} height={barH} rx={2} fill="var(--action)" opacity={0.85} />
+                      ) : (
+                        <rect x={x + 2} y={8} width={barW} height={72} rx={2} fill="none" stroke="var(--hairline-2)" strokeDasharray="3 2" />
+                      )}
+                      <text x={x + barW / 2 + 2} y={96} textAnchor="middle" fontSize={8} fill="var(--stone)" fontFamily="'Barlow Condensed', sans-serif">
+                        {d.label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+            <div className="grid grid-cols-3 border-t border-[var(--hairline)]">
+              {[
+                { label: 'Total', value: `${totalCalories.toLocaleString()} kcal` },
+                { label: 'Avg / Session', value: `${avgCalories.toLocaleString()} kcal` },
+                { label: 'Best Session', value: `${maxCalories.toLocaleString()} kcal` },
+              ].map((stat, i) => (
+                <div key={stat.label} className={`px-5 py-3 ${i < 2 ? 'border-r border-[var(--hairline)]' : ''}`}>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-0.5" style={condensed}>{stat.label}</p>
+                  <p className="text-[16px] font-black text-[var(--action)]" style={condensed}>{stat.value}</p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── CALENDAR GRID (desktop) ── */}
@@ -264,6 +379,42 @@ export const ProgressView: React.FC = () => {
                 <p className="text-[11px] text-[var(--stone)] mt-0.5" style={condensed}>
                   {format(selectedWorkout.date, 'MMM dd, yyyy · h:mm a')}
                 </p>
+                {/* Calorie edit row */}
+                <div className="flex items-center gap-2 mt-2">
+                  {editingCalorieId === selectedWorkout.id ? (
+                    <>
+                      <input
+                        type="number"
+                        min="0"
+                        value={calorieEditValue}
+                        onChange={e => setCalorieEditValue(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && selectedWorkout.id) handleCalorieEdit(selectedWorkout.id);
+                          if (e.key === 'Escape') setEditingCalorieId(null);
+                        }}
+                        onBlur={() => selectedWorkout.id && handleCalorieEdit(selectedWorkout.id)}
+                        className="w-24 bg-[var(--surface)] border border-[var(--action)] rounded px-2 py-1 text-[12px] font-mono text-[var(--ink)] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        autoFocus
+                        disabled={calorieSaving}
+                      />
+                      <span className="text-[11px] text-[var(--stone)]" style={condensed}>kcal</span>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setEditingCalorieId(selectedWorkout.id || null);
+                        setCalorieEditValue(selectedWorkout.calories?.toString() || '');
+                      }}
+                      className="flex items-center gap-1.5 text-[11px] text-[var(--stone)] hover:text-[var(--ash)] transition-colors bg-none border-none cursor-pointer p-0"
+                      style={condensed}
+                    >
+                      <Pencil className="w-3 h-3" />
+                      {selectedWorkout.calories != null
+                        ? `${selectedWorkout.calories} kcal`
+                        : 'Add calories'}
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex gap-1.5">
                 <button
