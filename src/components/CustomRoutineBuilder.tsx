@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Exercise, BODY_PARTS } from '../types';
+import { Exercise, BODY_PARTS, BodyPart, normalizeExerciseName } from '../types';
+import { useExerciseLibrary } from '../hooks/useExerciseLibrary';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
@@ -13,6 +14,8 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
   const [name, setName] = useState('');
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [saving, setSaving] = useState(false);
+  const { entries: libraryEntries, addToLibrary } = useExerciseLibrary();
+  const [activeSuggestionRow, setActiveSuggestionRow] = useState<number | null>(null);
 
   const addExercise = (type: 'strength' | 'cardio') => {
     if (type === 'strength') {
@@ -44,6 +47,9 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
         exercises: validExercises,
         createdAt: Date.now(),
       });
+      for (const ex of validExercises) {
+        await addToLibrary(ex.name, ex.bodyPart as BodyPart, (ex.type ?? 'strength') as 'strength' | 'cardio');
+      }
       onSave();
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, 'routines');
@@ -134,17 +140,47 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
           <div className="flex flex-col border-t border-[var(--hairline)]">
             {exercises.map((ex, idx) => (
               <div key={idx} className="py-4 border-b border-[var(--hairline)] flex gap-3 items-end flex-wrap">
-                <div className="flex-1 min-w-[160px]">
+                <div className="flex-1 min-w-[160px] relative">
                   <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-1.5" style={condensed}>
                     {ex.type === 'cardio' ? 'Activity' : 'Exercise'}
                   </label>
                   <input
                     type="text"
                     value={ex.name}
-                    onChange={e => updateExercise(idx, 'name', e.target.value)}
+                    onChange={e => {
+                      updateExercise(idx, 'name', e.target.value);
+                      setActiveSuggestionRow(idx);
+                    }}
+                    onFocus={() => setActiveSuggestionRow(idx)}
+                    onBlur={() => setTimeout(() => setActiveSuggestionRow(null), 150)}
                     placeholder={ex.type === 'cardio' ? 'Treadmill Run' : 'Bench Press'}
                     className={inputClass}
                   />
+                  {activeSuggestionRow === idx && ex.name.trim().length > 0 && (() => {
+                    const key = normalizeExerciseName(ex.name);
+                    const suggestions = libraryEntries
+                      .filter(e => e.type === ex.type && e.nameKey.includes(key) && e.nameKey !== key)
+                      .slice(0, 5);
+                    if (suggestions.length === 0) return null;
+                    return (
+                      <div className="absolute top-full left-0 right-0 z-20 bg-[var(--canvas)] border border-[var(--hairline-2)] rounded-lg mt-1 shadow-lg overflow-hidden">
+                        {suggestions.map(s => (
+                          <button
+                            key={s.id}
+                            onMouseDown={() => {
+                              updateExercise(idx, 'name', s.name);
+                              updateExercise(idx, 'bodyPart', s.bodyPart);
+                              setActiveSuggestionRow(null);
+                            }}
+                            className="w-full text-left px-3 py-2 text-[12px] flex justify-between items-center border-none bg-transparent cursor-pointer hover:bg-[var(--surface)] text-[var(--ink)] transition-colors"
+                          >
+                            <span>{s.name}</span>
+                            <span className="text-[10px] text-[var(--stone)] ml-2">{s.bodyPart}</span>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="w-28">
