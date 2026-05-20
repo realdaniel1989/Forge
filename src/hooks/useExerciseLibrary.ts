@@ -108,6 +108,7 @@ export function useExerciseLibrary() {
     secondary: ExerciseEntry
   ): Promise<void> => {
     if (!user) throw new Error('Not authenticated');
+    setError(null);
 
     const applyRetag = (exs: FirestoreExercise[]): FirestoreExercise[] =>
       exs.map(ex =>
@@ -165,7 +166,7 @@ export function useExerciseLibrary() {
       setEntries(prev => prev.filter(e => e.id !== secondary.id));
     } catch (e) {
       handleFirestoreError(e, OperationType.WRITE, 'exerciseLibrary/merge');
-      setError('Merge failed. No changes may have been saved.');
+      setError('Merge may be partially complete. Please reload before retrying.');
       throw e;
     }
   }, [user]);
