@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { Loader2, Bookmark } from 'lucide-react';
-import { Exercise } from '../types';
+import { Exercise, BodyPart } from '../types';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { useAuth } from '../AuthContext';
+import { useExerciseLibrary } from '../hooks/useExerciseLibrary';
 
 const condensed: React.CSSProperties = { fontFamily: "'Barlow Condensed', sans-serif" };
 
 export const RoutineGenerator: React.FC<{ onRoutineSaved: () => void }> = ({ onRoutineSaved }) => {
   const { user } = useAuth();
+  const { addToLibrary } = useExerciseLibrary();
   const [bodyPart, setBodyPart] = useState('');
   const [loading, setLoading] = useState(false);
   const [generatedRoutine, setGeneratedRoutine] = useState<{ name: string; exercises: Exercise[] } | null>(null);
@@ -53,6 +55,12 @@ export const RoutineGenerator: React.FC<{ onRoutineSaved: () => void }> = ({ onR
         createdAt: Date.now(),
       });
       onRoutineSaved();
+      // best-effort library sync — never blocks or fails the save
+      Promise.allSettled(
+        generatedRoutine.exercises
+          .filter(ex => ex.name && ex.bodyPart)
+          .map(ex => addToLibrary(ex.name, ex.bodyPart as BodyPart, ex.type ?? 'strength'))
+      );
       setGeneratedRoutine(null);
       setBodyPart('');
     } catch (err) {
