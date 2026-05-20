@@ -25,6 +25,8 @@ function computeStreaks(logs: HabitLog[], target: number): { current: number; lo
   const hitRate = Math.round((hits / Object.keys(byDate).length) * 100);
   let current = 0;
   let d = new Date();
+  // If today is not yet logged, start checking from yesterday so an existing streak isn't broken
+  if (byDate[format(d, 'yyyy-MM-dd')] == null) d = subDays(d, 1);
   while (true) {
     const key = format(d, 'yyyy-MM-dd');
     if (byDate[key] != null && byDate[key] >= target) { current++; d = subDays(d, 1); } else { break; }
@@ -38,7 +40,7 @@ function computeStreaks(logs: HabitLog[], target: number): { current: number; lo
   return { current, longest, hitRate };
 }
 
-const Heatmap: React.FC<{ logs: HabitLog[]; habit: Habit; dateRange: 'week' | '30days' | 'alltime' }> = ({ logs, habit, dateRange }) => {
+const Heatmap: React.FC<{ logs: HabitLog[]; habit: Habit; dateRange: 'week' | '30days' | 'alltime' }> = React.memo(({ logs, habit, dateRange }) => {
   const byDate: Record<string, number> = {};
   logs.forEach(l => { byDate[l.date] = l.actual; });
   const today = new Date();
@@ -100,7 +102,7 @@ const Heatmap: React.FC<{ logs: HabitLog[]; habit: Habit; dateRange: 'week' | '3
       </svg>
     </div>
   );
-};
+});
 
 export const HabitTracker: React.FC = () => {
   const { user } = useAuth();
