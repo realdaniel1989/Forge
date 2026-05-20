@@ -68,23 +68,74 @@ service cloud.firestore {
         data.unit is string && data.unit.matches('^(lbs|kgs)$') &&
         data.exercises is list && data.exercises.size() <= 50 &&
         (data.get('routineId', '') == null || data.get('routineId', '') is string) &&
-        (data.get('bodyPart', '') == null || data.get('bodyPart', '') is string);
+        (data.get('bodyPart', '') == null || data.get('bodyPart', '') is string) &&
+        (data.get('calories', null) == null || data.get('calories', null) is number);
     }
 
     match /workoutLogs/{logId} {
       allow read: if isSignedIn() && existing().userId == request.auth.uid;
       allow list: if isSignedIn() && existing().userId == request.auth.uid;
-      
+
       allow create: if isSignedIn() &&
         isValidId(logId) &&
         isValidWorkoutLog(incoming());
-        
+
       allow update: if isSignedIn() &&
-        isValidWorkoutLog(incoming()) &&
         existing().userId == request.auth.uid &&
         incoming().userId == existing().userId &&
-        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'date', 'exercises', 'routineId', 'bodyPart', 'unit']);
-        
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'date', 'exercises', 'routineId', 'bodyPart', 'unit', 'calories']);
+
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // Habit Validation
+    function isValidHabit(data) {
+      return data.keys().hasAll(['userId', 'name', 'target', 'unit', 'createdAt', 'archived']) &&
+        data.size() <= 10 &&
+        data.userId == request.auth.uid &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.target is number && data.target > 0 &&
+        data.unit is string && data.unit.size() > 0 && data.unit.size() <= 50 &&
+        data.createdAt is number &&
+        data.archived is bool;
+    }
+
+    match /habits/{habitId} {
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() && isValidHabit(incoming());
+
+      allow update: if isSignedIn() &&
+        existing().userId == request.auth.uid &&
+        incoming().userId == existing().userId &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'target', 'unit', 'archived']);
+
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // HabitLog Validation
+    function isValidHabitLog(data) {
+      return data.keys().hasAll(['userId', 'habitId', 'date', 'actual', 'createdAt']) &&
+        data.size() <= 10 &&
+        data.userId == request.auth.uid &&
+        data.habitId is string && data.habitId.size() > 0 &&
+        data.date is string && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+        data.actual is number && data.actual >= 0 &&
+        data.createdAt is number;
+    }
+
+    match /habitLogs/{logId} {
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() && isValidHabitLog(incoming());
+
+      allow update: if isSignedIn() &&
+        existing().userId == request.auth.uid &&
+        incoming().userId == existing().userId &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['actual']);
+
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
   }
