@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Routine, Exercise, TrackedSet, WorkoutLog } from '../types';
 import { useAuth } from '../AuthContext';
-import { collection, addDoc, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { Check, X, Loader2, Trash2, ChevronUp, ChevronDown, Plus, Timer, Search } from 'lucide-react';
@@ -50,6 +50,11 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const [searchQuery, setSearchQuery] = useState('');
   const [filterByBodyPart, setFilterByBodyPart] = useState(!!routine.bodyPart);
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
+  const [showCalorieModal, setShowCalorieModal] = useState(false);
+  const [savedLogId, setSavedLogId] = useState<string | null>(null);
+  const [calorieInput, setCalorieInput] = useState('');
+  const [calorieSaving, setCalorieSaving] = useState(false);
+  const [calorieError, setCalorieError] = useState('');
 
   // Find the active exercise index (first with an incomplete set)
   const activeExerciseIndex = exercises.findIndex(ex => {
@@ -243,7 +248,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
           weight: parseFloat(toDisplayUnit(s.weight).toFixed(1)),
         })),
       }));
-      await addDoc(collection(db, 'workoutLogs'), {
+      const docRef = await addDoc(collection(db, 'workoutLogs'), {
         userId: user.uid,
         routineId: routine.id,
         name: routine.name,
@@ -253,12 +258,40 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
         exercises: exercisesToSave
       });
       localStorage.removeItem(draftKey);
-      onFinish();
+      setSavedLogId(docRef.id);
+      setCalorieInput('');
+      setCalorieError('');
+      setShowCalorieModal(true);
     } catch(e) {
       handleFirestoreError(e, OperationType.CREATE, 'workoutLogs');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCalorieSave = async () => {
+    if (!savedLogId) return;
+    const val = parseInt(calorieInput, 10);
+    if (isNaN(val) || val < 0) {
+      setCalorieError('Enter a valid number');
+      return;
+    }
+    setCalorieSaving(true);
+    try {
+      await updateDoc(doc(db, 'workoutLogs', savedLogId), { calories: val });
+      setShowCalorieModal(false);
+      onFinish();
+    } catch(e) {
+      handleFirestoreError(e, OperationType.UPDATE, `workoutLogs/${savedLogId}`);
+      setCalorieError('Failed to save. Try again.');
+    } finally {
+      setCalorieSaving(false);
+    }
+  };
+
+  const handleCalorieSkip = () => {
+    setShowCalorieModal(false);
+    onFinish();
   };
 
   const completedSets = exercises.reduce((acc, ex) => acc + (ex.trackedSets?.filter(s => s.completed).length || 0), 0);
@@ -670,6 +703,52 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                   </button>
                 ))
               }
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── CALORIE MODAL ── */}
+      {showCalorieModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+          <div className="bg-[var(--bg-1)] border border-[var(--border)] rounded-xl w-full max-w-[360px] p-6 flex flex-col gap-5">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)] mb-1">Workout Complete</p>
+              <h2 className="text-[22px] font-black uppercase text-[var(--white)] leading-tight">{routine.name}</h2>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                Calories burnt
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 450"
+                  value={calorieInput}
+                  onChange={e => { setCalorieInput(e.target.value); setCalorieError(''); }}
+                  className="flex-1 bg-[var(--bg-2)] border border-[var(--border)] rounded-lg px-4 py-2.5 text-[var(--white)] text-[15px] font-mono outline-none focus:border-[var(--red)] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  autoFocus
+                  onKeyDown={e => { if (e.key === 'Enter') handleCalorieSave(); if (e.key === 'Escape') handleCalorieSkip(); }}
+                />
+                <span className="text-[13px] font-semibold text-[var(--muted)]">kcal</span>
+              </div>
+              {calorieError && <p className="text-[11px] text-[var(--red)]">{calorieError}</p>}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleCalorieSkip}
+                className="flex-1 py-2.5 rounded-lg border border-[var(--border)] text-[var(--muted)] text-[13px] font-semibold uppercase tracking-[0.06em] bg-none cursor-pointer hover:border-[var(--muted)] transition-colors"
+              >
+                Skip
+              </button>
+              <button
+                onClick={handleCalorieSave}
+                disabled={calorieSaving}
+                className="flex-1 py-2.5 rounded-lg bg-[var(--red)] text-white text-[13px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {calorieSaving ? 'Saving…' : 'Save'}
+              </button>
             </div>
           </div>
         </div>
