@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { BODY_PARTS, BodyPart, ExerciseEntry } from '../types';
 import { useExerciseLibrary } from '../hooks/useExerciseLibrary';
 
@@ -26,10 +26,13 @@ export const ExerciseLibrary: React.FC = () => {
   const [mergeError, setMergeError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showToast = (msg: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast(msg);
-    setTimeout(() => setToast(null), 3000);
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
   };
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
 
   const closeMergeModal = () => {
     setMergeSource(null);
@@ -59,12 +62,17 @@ export const ExerciseLibrary: React.FC = () => {
     if (!addBodyPart) { setAddError('Select a body part.'); return; }
     setAddSaving(true);
     setAddError('');
-    await addToLibrary(addName, addBodyPart as BodyPart, addType);
-    setAddSaving(false);
-    setShowAddModal(false);
-    setAddName('');
-    setAddBodyPart('');
-    setAddType('strength');
+    try {
+      await addToLibrary(addName, addBodyPart as BodyPart, addType);
+      setShowAddModal(false);
+      setAddName('');
+      setAddBodyPart('');
+      setAddType('strength');
+    } catch {
+      setAddError('Failed to save. Please try again.');
+    } finally {
+      setAddSaving(false);
+    }
   };
 
   const handleMergeConfirm = async () => {
@@ -148,6 +156,12 @@ export const ExerciseLibrary: React.FC = () => {
         </div>
       )}
 
+      {entries.length > 0 && grouped.length === 0 && search.trim() !== '' && (
+        <p className="text-[12px] text-center text-[var(--stone)] py-6" style={condensed}>
+          No exercises match "{search}".
+        </p>
+      )}
+
       {/* Grouped list */}
       {grouped.map(([bodyPart, exs]) => (
         <div key={bodyPart} className="mb-6">
@@ -172,8 +186,14 @@ export const ExerciseLibrary: React.FC = () => {
                       autoFocus
                       value={ex.bodyPart}
                       onChange={async e => {
-                        await updateBodyPart(ex.id, e.target.value as BodyPart);
-                        setEditingId(null);
+                        const newVal = e.target.value as BodyPart;
+                        try {
+                          await updateBodyPart(ex.id, newVal);
+                          setEditingId(null);
+                        } catch {
+                          setEditingId(null); // close edit; hook already reverted optimistic update
+                          showToast('Failed to update body part.');
+                        }
                       }}
                       onBlur={() => setEditingId(null)}
                       className={selectClass}
@@ -206,7 +226,7 @@ export const ExerciseLibrary: React.FC = () => {
       {showAddModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setShowAddModal(false)}
+          onClick={() => { if (!addSaving) setShowAddModal(false); }}
         >
           <div
             className="bg-[var(--canvas)] border border-[var(--hairline-2)] rounded-[var(--radius)] p-6 w-full max-w-sm"
@@ -286,7 +306,7 @@ export const ExerciseLibrary: React.FC = () => {
       {mergeSource && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          onClick={closeMergeModal}
+          onClick={() => { if (!mergeSaving) closeMergeModal(); }}
         >
           <div
             className="bg-[var(--canvas)] border border-[var(--hairline-2)] rounded-[var(--radius)] p-6 w-full max-w-sm"
@@ -330,6 +350,9 @@ export const ExerciseLibrary: React.FC = () => {
                         <span className="text-[10px] opacity-60 ml-2">{e.bodyPart}</span>
                       </button>
                     ))}
+                  {entries.filter(e => e.id !== mergeSource.id && e.name.toLowerCase().includes(mergeSearch.toLowerCase())).length === 0 && (
+                    <p className="text-[11px] text-[var(--stone)] text-center py-3" style={condensed}>No match found.</p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -360,16 +383,16 @@ export const ExerciseLibrary: React.FC = () => {
                   <div className="font-bold text-[13px]">{mergeSource.name}</div>
                 </div>
                 <div className="text-center text-[16px] text-[var(--stone)] mb-3">↓</div>
-                <div className="bg-[var(--surface)] border border-green-600 rounded-lg p-3 mb-4">
-                  <div className="text-[9px] text-green-500 uppercase tracking-[.1em] mb-1 font-bold">
+                <div className="bg-[var(--surface)] border border-[var(--success,#16a34a)] rounded-lg p-3 mb-4">
+                  <div className="text-[9px] text-[var(--success,#16a34a)] uppercase tracking-[.1em] mb-1 font-bold">
                     Keep as primary
                   </div>
-                  <div className="font-bold text-[13px]">{mergeTarget!.name}</div>
+                  <div className="font-bold text-[13px]">{mergeTarget?.name}</div>
                 </div>
                 <p className="text-[11px] text-[var(--stone)] mb-4">
                   All past workouts and routines using{' '}
                   <strong className="text-[var(--ink)]">{mergeSource.name}</strong> will be updated to{' '}
-                  <strong className="text-[var(--ink)]">{mergeTarget!.name}</strong>. This cannot be undone.
+                  <strong className="text-[var(--ink)]">{mergeTarget?.name}</strong>. This cannot be undone.
                 </p>
                 {mergeError && (
                   <p className="text-[11px] text-[var(--action)] mb-3">{mergeError}</p>

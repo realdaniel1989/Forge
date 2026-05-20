@@ -87,6 +87,7 @@ export function useExerciseLibrary() {
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, 'exerciseLibrary');
       setError('Failed to add exercise to library');
+      throw e;
     }
   }, [user]); // no 'entries' dependency — reads prev inside updater
 
