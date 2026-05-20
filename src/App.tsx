@@ -8,6 +8,7 @@ import { RoutineGenerator } from './components/RoutineGenerator';
 import { LiveWorkout } from './components/LiveWorkout';
 import { ProgressView } from './components/ProgressView';
 import { CustomRoutineBuilder } from './components/CustomRoutineBuilder';
+import { HabitTracker } from './components/HabitTracker';
 import { Routine } from './types';
 import { initError } from './firebase';
 
@@ -59,6 +60,11 @@ const MainView = () => {
       {mountedTabs.has('progress') && (
         <div style={{ display: tab === 'progress' ? 'contents' : 'none' }} aria-hidden={tab !== 'progress'} inert={tab !== 'progress' ? ('' as unknown as boolean) : undefined}>
           <ProgressView />
+        </div>
+      )}
+      {mountedTabs.has('habits') && (
+        <div style={{ display: tab === 'habits' ? 'contents' : 'none' }} aria-hidden={tab !== 'habits'} inert={tab !== 'habits' ? ('' as unknown as boolean) : undefined}>
+          <HabitTracker />
         </div>
       )}
     </Layout>
