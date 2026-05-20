@@ -124,7 +124,10 @@ export const ProgressView: React.FC = () => {
 
   const handleCalorieEdit = async (logId: string) => {
     const val = parseInt(calorieEditValue, 10);
-    if (isNaN(val) || val < 0) return;
+    if (isNaN(val) || val < 0) {
+      setEditingCalorieId(null);
+      return;
+    }
     setCalorieSaving(true);
     try {
       await updateDoc(doc(db, 'workoutLogs', logId), { calories: val });
