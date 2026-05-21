@@ -153,11 +153,12 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
     newSets[setIndex] = { ...newSets[setIndex], [field]: value };
     newEx[exerciseIndex] = { ...newEx[exerciseIndex], trackedSets: newSets };
     setExercises(newEx);
-    
+
     if (field === 'completed' && value === true && !wasCompleted) {
        timerEndTimeRef.current = Date.now() + configuredRestTime * 1000;
        setRestTimeRemaining(configuredRestTime);
        setIsTimerActive(true);
+       setIsTimerMinimized(false);
     }
   };
 
