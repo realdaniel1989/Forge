@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { useAuth } from '../AuthContext';
 import { WorkoutLog, BODY_PARTS } from '../types';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks } from '../dateUtils';
 import { X, Trash2, Pencil } from 'lucide-react';
 
 const condensed: React.CSSProperties = { fontFamily: "'Barlow Condensed', sans-serif" };
