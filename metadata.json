@@ -1,6 +1,0 @@
-{
-  "name": "Gym Workout Tracker",
-  "description": "An application to track gym workouts, save routines, view progress over time, and generate AI-powered workout plans for specific body parts.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bloat Audit — gym-workout-tracker</title>
+<style>
+  :root{--bg:#0b0d10;--card:#13171c;--ink:#e7ecf3;--mute:#94a3b8;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--accent:#60a5fa;--border:#1f2630}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:28px;margin:0 0 6px} h2{font-size:20px;margin:36px 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px}
+  h3{font-size:16px;margin:18px 0 6px;color:var(--accent)}
+  p,li{color:var(--ink)} .mute{color:var(--mute)}
+  code,pre{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+  code{background:#0f1419;padding:1px 6px;border-radius:4px;border:1px solid var(--border)}
+  pre{background:#0f1419;border:1px solid var(--border);border-radius:8px;padding:14px;overflow:auto}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin:12px 0}
+  .row{display:grid;grid-template-columns:120px 1fr;gap:12px;margin:6px 0}
+  .pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;border:1px solid}
+  .p-bad{color:var(--bad);border-color:#5a1c1c;background:#2a1212}
+  .p-warn{color:var(--warn);border-color:#5a3d12;background:#2a1f0c}
+  .p-ok{color:var(--ok);border-color:#1c5a30;background:#0d2a17}
+  .p-info{color:var(--accent);border-color:#1c3a5a;background:#0d1c2a}
+  table{width:100%;border-collapse:collapse;margin:8px 0}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);font-size:14px;vertical-align:top}
+  th{color:var(--mute);font-weight:600}
+  .num{font-variant-numeric:tabular-nums;text-align:right}
+  .tldr{background:linear-gradient(180deg,#0f1a2a,#0d141d);border:1px solid #1c3a5a;border-radius:10px;padding:18px 20px;margin:18px 0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:720px){.grid2{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+  hr{border:0;border-top:1px solid var(--border);margin:24px 0}
+  .kbd{font:12px ui-monospace,monospace;background:#0f1419;border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Bloat Audit — gym-workout-tracker</h1>
+<p class="mute">Generated 2026-05-21 · React 19 + Vite + Firebase + Express + Gemini · 3,938 LOC source</p>
+
+<div class="tldr">
+  <h3 style="margin-top:0">TL;DR</h3>
+  <p>The app itself isn't huge — <strong>~3.9K LOC across 14 components</strong>. The bloat lives in three places:</p>
+  <ol style="margin:6px 0 0 18px">
+    <li><strong>Firebase v12 dominates the 855&nbsp;KB client bundle</strong> (~60–70% of it). It's also the biggest folder in <code>node_modules</code> at 148&nbsp;MB.</li>
+    <li><strong>Ghost dependencies in <code>package.json</code></strong>: <code>recharts</code>, <code>motion</code>, and <code>date-fns</code> are partially or fully unused in source. <code>@google/genai</code> pulls 8+ MB of transitive deps (<code>protobufjs</code>, <code>web-streams-polyfill</code>, <code>framer-motion</code>) into <code>node_modules</code>.</li>
+    <li><strong>No code splitting</strong>. One 855&nbsp;KB JS chunk on first load. Two screens (<code>LiveWorkout</code> 809 LOC, <code>ProgressView</code> 747 LOC) are eagerly loaded even before login.</li>
+  </ol>
+  <p style="margin-bottom:0"><strong>Direct answer to your question:</strong> migrating Firebase → Supabase is a real win (~250–400&nbsp;KB → ~80–120&nbsp;KB on the bundle), but it's <em>not</em> the first thing to do. You can cut ~250&nbsp;KB and ~400&nbsp;MB of <code>node_modules</code> in an afternoon without touching the database. Refactoring the whole app is <em>not</em> required.</p>
+</div>
+
+<h2>Inventory — where the bytes go</h2>
+
+<h3>Client bundle (<code>dist/assets/</code>)</h3>
+<table>
+  <tr><th>File</th><th class="num">Size</th><th>Notes</th></tr>
+  <tr><td><code>index-*.js</code></td><td class="num">855 KB</td><td>Single chunk, all routes eager. <span class="pill p-bad">target ≤ 300 KB</span></td></tr>
+  <tr><td><code>index-*.css</code></td><td class="num">34 KB</td><td>Tailwind v4, fine.</td></tr>
+</table>
+
+<h3><code>node_modules</code> — top 10 (421 MB total)</h3>
+<table>
+<tr><th>Package</th><th class="num">Size</th><th>Used?</th></tr>
+<tr><td><code>@firebase</code> + <code>firebase</code></td><td class="num">148 MB</td><td><span class="pill p-warn">heavy use</span></td></tr>
+<tr><td><code>lucide-react</code></td><td class="num">43 MB</td><td><span class="pill p-ok">5 files, tree-shaken</span></td></tr>
+<tr><td><code>date-fns</code></td><td class="num">42 MB</td><td><span class="pill p-warn">7 functions in 2 files</span></td></tr>
+<tr><td><code>typescript</code></td><td class="num">22 MB</td><td>dev only</td></tr>
+<tr><td><code>@google/genai</code></td><td class="num">14 MB</td><td><span class="pill p-warn">server.ts only</span></td></tr>
+<tr><td><code>es-toolkit</code></td><td class="num">12 MB</td><td><span class="pill p-bad">transitive, unused in src</span></td></tr>
+<tr><td><code>tsx</code></td><td class="num">11 MB</td><td>dev only</td></tr>
+<tr><td><code>web-streams-polyfill</code></td><td class="num">8.7 MB</td><td><span class="pill p-bad">transitive from genai</span></td></tr>
+<tr><td><code>recharts</code></td><td class="num">8.5 MB</td><td><span class="pill p-bad">0 imports — ghost dep</span></td></tr>
+<tr><td><code>@reduxjs</code></td><td class="num">7.1 MB</td><td><span class="pill p-bad">transitive, unused</span></td></tr>
+<tr><td><code>framer-motion</code> + <code>motion-dom</code></td><td class="num">9.7 MB</td><td><span class="pill p-bad">0 imports — ghost dep</span></td></tr>
+</table>
+
+<h3>Source files — top by LOC</h3>
+<table>
+<tr><th>File</th><th class="num">LOC</th></tr>
+<tr><td>src/components/LiveWorkout.tsx</td><td class="num">809</td></tr>
+<tr><td>src/components/ProgressView.tsx</td><td class="num">747</td></tr>
+<tr><td>src/components/ExerciseLibrary.tsx</td><td class="num">425</td></tr>
+<tr><td>src/components/HabitTracker.tsx</td><td class="num">421</td></tr>
+<tr><td>src/components/RoutinesList.tsx</td><td class="num">298</td></tr>
+</table>
+
+<h2>The bloat issues, ranked by ROI</h2>
+
+<div class="card">
+  <h3>#1 — Ghost dependencies <span class="pill p-bad">15 min · saves ~30–60 KB bundle, ~25 MB node_modules</span></h3>
+  <p><code>recharts</code> and <code>motion</code> appear in <code>package.json</code> but have <strong>zero imports</strong> anywhere in <code>src/</code> or <code>server.ts</code>. Tree-shaking probably keeps them out of the final JS, but they still bloat installs, lockfiles, and CI cache.</p>
+  <p><strong>Fix:</strong></p>
+  <pre>npm uninstall recharts motion</pre>
+  <p>If you intended to use Recharts for <code>ProgressView</code>, decide now: add it back deliberately, or stick with the current hand-rolled chart code.</p>
+</div>
+
+<div class="card">
+  <h3>#2 — No code splitting <span class="pill p-bad">1–2 hr · saves ~400–500 KB from initial load</span></h3>
+  <p>Every screen is statically imported in <code>App.tsx</code>. That means a logged-out user downloads <code>LiveWorkout</code> (809 LOC), <code>ProgressView</code> (747 LOC), and <code>ExerciseLibrary</code> (425 LOC) before they see the login button.</p>
+  <p><strong>Fix:</strong> lazy-load route-level components.</p>
+  <pre>// src/App.tsx
+import { lazy, Suspense } from 'react';
+const LiveWorkout    = lazy(() =&gt; import('./components/LiveWorkout'));
+const ProgressView   = lazy(() =&gt; import('./components/ProgressView'));
+const ExerciseLibrary= lazy(() =&gt; import('./components/ExerciseLibrary'));
+const HabitTracker   = lazy(() =&gt; import('./components/HabitTracker'));
+
+// Wrap the router/switch:
+&lt;Suspense fallback={&lt;div className="p-8"&gt;Loading…&lt;/div&gt;}&gt;
+  {/* routes */}
+&lt;/Suspense&gt;</pre>
+  <p>Also add manual chunking for Firebase in <code>vite.config.ts</code>:</p>
+  <pre>build: {
+  rollupOptions: {
+    output: {
+      manualChunks: {
+        firebase: ['firebase/app','firebase/auth','firebase/firestore'],
+        react:    ['react','react-dom'],
+      },
+    },
+  },
+}</pre>
+  <p>Expected: initial JS drops from <strong>855 KB → ~300–350 KB</strong>; Firebase chunk loads in parallel and is cached separately across deploys.</p>
+</div>
+
+<div class="card">
+  <h3>#3 — Firebase SDK is the heaviest piece left <span class="pill p-warn">decision point</span></h3>
+  <p>Even with chunking, Firebase Auth + Firestore is roughly <strong>250–400 KB gzipped</strong> at runtime. It's the biggest single thing on the wire.</p>
+  <p><strong>Option A — Stay on Firebase, trim it.</strong> You're using only Auth and Firestore. Keep imports modular (you already do this — good). Don't pull in <code>firebase/analytics</code>, <code>firebase/storage</code>, etc. No further code change needed beyond chunking.</p>
+  <p><strong>Option B — Move to Supabase.</strong> <code>@supabase/supabase-js</code> is ~80–120 KB gzipped. Net bundle savings: <strong>~150–250 KB</strong>. Migration cost:</p>
+  <ul>
+    <li>Schema: <code>routines</code>, <code>workoutLogs</code>, <code>exerciseLibrary</code>, <code>habits</code> become Postgres tables. <code>firestore.rules</code> (168 lines) becomes Row-Level Security policies — roughly 1:1 conceptually.</li>
+    <li>Auth: Supabase Auth has Google OAuth out of the box; <code>AuthContext</code> rewrite is ~50 lines.</li>
+    <li>Realtime: you don't appear to use <code>onSnapshot</code> heavily; <code>getDocs</code> dominates. So Postgres+REST is fine.</li>
+    <li>Offline: you use <code>persistentLocalCache</code>. Supabase doesn't ship equivalent offline persistence — you'd add IndexedDB caching yourself if it matters.</li>
+  </ul>
+  <p><strong>Option C — Postgres directly on Railway.</strong> Smallest possible client (just <code>postgres</code> driver or REST), but you'd build auth, RLS, and the API layer yourself. ~1–2 weeks of work for marginal gains over Supabase.</p>
+  <p><strong>My recommendation:</strong> do Options #1, #2, #4 first. <em>Then</em> measure. If your bundle is already ~300 KB and Firestore reads are fast, Supabase is not worth the migration. The win there is mostly <strong>cost predictability + portability</strong>, not raw performance.</p>
+</div>
+
+<div class="card">
+  <h3>#4 — <code>date-fns</code> is overkill for 7 functions <span class="pill p-warn">20 min · saves ~10–20 KB bundle, 42 MB node_modules</span></h3>
+  <p>Two files import 7 named functions: <code>format</code>, <code>subDays</code>, <code>eachDayOfInterval</code>, <code>startOfWeek</code>, <code>endOfWeek</code>, <code>subWeeks</code>, <code>addWeeks</code>, <code>isSameDay</code>.</p>
+  <p><strong>Options:</strong></p>
+  <ul>
+    <li><strong>Replace with dayjs</strong> (~7 KB total): drop-in for <code>format</code>, plus <code>weekday</code>/<code>isSame</code> plugins.</li>
+    <li><strong>Write 30 lines of native JS.</strong> <code>Intl.DateTimeFormat</code> + a tiny <code>src/dateUtils.ts</code> covers all 7 use cases. Zero deps.</li>
+  </ul>
+  <p>Vite already tree-shakes date-fns at the bundle layer, but the 42 MB <code>node_modules</code> footprint slows installs and CI. Replacing it is mostly a hygiene win.</p>
+</div>
+
+<div class="card">
+  <h3>#5 — <code>@google/genai</code> is pulling in junk <span class="pill p-warn">30 min · saves 25–40 MB node_modules</span></h3>
+  <p>The Gemini SDK is used <strong>only in <code>server.ts</code></strong> (5 lines). It drags in <code>protobufjs</code>, <code>web-streams-polyfill</code>, <code>framer-motion</code>(!), <code>@reduxjs</code>, <code>es-toolkit</code> — none of which show up in your source.</p>
+  <p>Since you only call <code>ai.models.generateContent</code> with a JSON schema, you can replace the SDK with a direct REST call to <code>https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent</code> using <code>fetch</code>. ~40 lines.</p>
+  <p>This doesn't shrink the client bundle (SDK never reaches the browser), but it removes ~40 MB of transitive cruft from <code>node_modules</code> and trims the Docker image you deploy to Railway.</p>
+</div>
+
+<div class="card">
+  <h3>#6 — <code>LiveWorkout.tsx</code> (809) and <code>ProgressView.tsx</code> (747) are oversized <span class="pill p-info">refactor, not bloat</span></h3>
+  <p>Not strictly "bloat" — but these files are doing too much. Likely candidates for extraction:</p>
+  <ul>
+    <li><code>LiveWorkout</code>: split timer/rest logic, set tracking, and workout completion into hooks (<code>useWorkoutTimer</code>, <code>useSetTracking</code>).</li>
+    <li><code>ProgressView</code>: split chart rendering from data aggregation.</li>
+  </ul>
+  <p>Smaller files are also easier to lazy-load and tree-shake.</p>
+</div>
+
+<div class="card">
+  <h3>#7 — Misc cleanup <span class="pill p-ok">trivial</span></h3>
+  <ul>
+    <li><code>src/.DS_Store</code> is committed. Add <code>**/.DS_Store</code> to <code>.gitignore</code>.</li>
+    <li><code>firebase-applet-config.json</code>, <code>firebase-blueprint.json</code>, <code>metadata.json</code> — left over from AI Studio scaffolding. Confirm they're not used and delete.</li>
+    <li><code>package.json</code> has duplicate <code>vite</code> in both <code>dependencies</code> and <code>devDependencies</code>. Remove from <code>dependencies</code>.</li>
+    <li><code>@vitejs/plugin-react</code> and <code>@tailwindcss/vite</code> live under <code>dependencies</code> — should be <code>devDependencies</code>. (Build-time only.)</li>
+  </ul>
+</div>
+
+<h2>Recommended order of operations</h2>
+<ol>
+  <li><strong>Day 1 (under an hour):</strong> remove ghost deps (#1), fix package.json layout (#7). <br/><em>Result: cleaner installs, no behavior change.</em></li>
+  <li><strong>Day 1 afternoon (1–2 hours):</strong> add code splitting + manual chunks (#2). <br/><em>Result: first-paint JS drops from 855 KB → ~300–350 KB.</em></li>
+  <li><strong>Day 2:</strong> replace <code>date-fns</code> (#4) and inline the Gemini REST call (#5). <br/><em>Result: 60+ MB off node_modules, smaller Docker image.</em></li>
+  <li><strong>Measure.</strong> Run Lighthouse and check actual TTI. If you're under 2s on 4G, stop here.</li>
+  <li><strong>Only if needed:</strong> evaluate Supabase migration (#3, Option B). At that point you'll have hard numbers to justify the week of work.</li>
+  <li><strong>Background:</strong> refactor <code>LiveWorkout</code> and <code>ProgressView</code> when you next touch them (#6).</li>
+</ol>
+
+<h2>What you should <em>not</em> do</h2>
+<ul>
+  <li><strong>Don't rewrite the app.</strong> 3,938 LOC across 14 components is fine. The architecture is reasonable.</li>
+  <li><strong>Don't migrate to Supabase as the first step.</strong> You'll spend a week and your bundle will still be 500 KB because you skipped code splitting. Fix the cheap stuff first; the expensive stuff may become unnecessary.</li>
+  <li><strong>Don't drop Firebase Auth for a custom solution.</strong> You'll save bundle bytes and lose weeks. Auth is not where the wins are.</li>
+  <li><strong>Don't move to Postgres-on-Railway directly</strong> unless you have a strong product reason (cost, data ownership, complex relational queries). For this workload, the perf delta vs. Firestore is invisible.</li>
+</ul>
+
+<h2>Expected outcome if you do steps 1–4</h2>
+<table>
+  <tr><th>Metric</th><th class="num">Before</th><th class="num">After</th></tr>
+  <tr><td>Initial JS bundle</td><td class="num">855 KB</td><td class="num">~300–350 KB</td></tr>
+  <tr><td>node_modules size</td><td class="num">421 MB</td><td class="num">~320 MB</td></tr>
+  <tr><td>Docker image (Railway)</td><td class="num">~600 MB</td><td class="num">~450 MB</td></tr>
+  <tr><td>Cold install (CI)</td><td class="num">~60–90 s</td><td class="num">~40–60 s</td></tr>
+  <tr><td>Source LOC</td><td class="num">3,938</td><td class="num">~3,800 (≈)</td></tr>
+</table>
+<p class="mute">Numbers are estimates; measure after each step.</p>
+
+</div>
+</body>
+</html>
