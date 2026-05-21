@@ -6,6 +6,7 @@ import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { useAuth } from '../AuthContext';
 import { Trash2 } from 'lucide-react';
+import { NumericInput } from './NumericInput';
 
 const condensed: React.CSSProperties = { fontFamily: "'Barlow Condensed', sans-serif" };
 
@@ -206,22 +207,22 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
                   <>
                     <div className="w-16">
                       <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-1.5" style={condensed}>Min</label>
-                      <input type="number" min="0" value={ex.duration || 0} onChange={e => updateExercise(idx, 'duration', parseInt(e.target.value) || 0)} className={numInputClass} />
+                      <NumericInput integer min={0} value={ex.duration || 0} onChange={n => updateExercise(idx, 'duration', n)} className={numInputClass} />
                     </div>
                     <div className="w-16">
                       <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-1.5" style={condensed}>Dist</label>
-                      <input type="number" min="0" value={ex.distance || 0} onChange={e => updateExercise(idx, 'distance', parseFloat(e.target.value) || 0)} className={numInputClass} />
+                      <NumericInput min={0} value={ex.distance || 0} onChange={n => updateExercise(idx, 'distance', n)} className={numInputClass} />
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="w-16">
                       <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-1.5" style={condensed}>Sets</label>
-                      <input type="number" min="1" value={ex.sets || 1} onChange={e => updateExercise(idx, 'sets', parseInt(e.target.value) || 1)} className={numInputClass} />
+                      <NumericInput integer min={1} value={ex.sets || 1} onChange={n => updateExercise(idx, 'sets', n)} className={numInputClass} />
                     </div>
                     <div className="w-16">
                       <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-1.5" style={condensed}>Reps</label>
-                      <input type="number" min="1" value={ex.reps || 1} onChange={e => updateExercise(idx, 'reps', parseInt(e.target.value) || 1)} className={numInputClass} />
+                      <NumericInput integer min={1} value={ex.reps || 1} onChange={n => updateExercise(idx, 'reps', n)} className={numInputClass} />
                     </div>
                   </>
                 )}

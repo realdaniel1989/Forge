@@ -7,6 +7,7 @@ import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { Check, X, Loader2, Trash2, ChevronUp, ChevronDown, Plus, Timer, Search } from 'lucide-react';
 import { playAlarm, prewarmAudio } from '../timerAlarm';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { NumericInput } from './NumericInput';
 
 export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = ({routine, onFinish}) => {
   const { user } = useAuth();
@@ -372,11 +373,11 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
           {/* Rest timer config */}
           <div className="hidden sm:flex items-center bg-[var(--bg-2)] border border-[var(--border)] rounded-[var(--radius-sm)] px-3 py-1.5 gap-1.5">
             <Timer className="w-3 h-3 text-[var(--muted)]" />
-            <input 
-              type="number"
-              min="0"
-              value={configuredRestTime} 
-              onChange={(e) => setConfiguredRestTime(Math.max(0, parseInt(e.target.value) || 0))}
+            <NumericInput
+              integer
+              min={0}
+              value={configuredRestTime}
+              onChange={n => setConfiguredRestTime(n)}
               className="bg-transparent text-[var(--text)] text-[11px] font-mono outline-none w-7 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <span className="font-mono text-[10px] text-[var(--muted)]">sec</span>
@@ -384,11 +385,11 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
           {/* Mobile rest timer config */}
           <div className="flex sm:hidden items-center bg-[var(--bg-2)] border border-[var(--border)] rounded-[var(--radius-sm)] px-2 py-1.5 gap-1">
             <Timer className="w-3 h-3 text-[var(--muted)]" />
-            <input 
-              type="number"
-              min="0"
-              value={configuredRestTime} 
-              onChange={(e) => setConfiguredRestTime(Math.max(0, parseInt(e.target.value) || 0))}
+            <NumericInput
+              integer
+              min={0}
+              value={configuredRestTime}
+              onChange={n => setConfiguredRestTime(n)}
               className="bg-transparent text-[var(--text)] text-[11px] font-mono outline-none w-7 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <span className="font-mono text-[9px] text-[var(--muted)]">s</span>
@@ -545,11 +546,11 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                             <div className="flex gap-4">
                               <div>
                                 <div className="text-[var(--muted)] mb-1 text-[9px] uppercase tracking-[0.1em]">Duration (min)</div>
-                                <input type="number" value={ex.duration || 0} onChange={e => updateExerciseField(idx, 'duration', parseInt(e.target.value) || 0)} className="bg-transparent border-b border-[var(--border-2)] w-16 outline-none focus:border-[var(--red)] text-[var(--white)] p-1 text-[13px] font-mono font-bold" />
+                                <NumericInput integer min={0} value={ex.duration || 0} onChange={n => updateExerciseField(idx, 'duration', n)} className="bg-transparent border-b border-[var(--border-2)] w-16 outline-none focus:border-[var(--red)] text-[var(--white)] p-1 text-[13px] font-mono font-bold" />
                               </div>
                               <div>
                                 <div className="text-[var(--muted)] mb-1 text-[9px] uppercase tracking-[0.1em]">Distance</div>
-                                <input type="number" value={ex.distance || 0} onChange={e => updateExerciseField(idx, 'distance', parseFloat(e.target.value) || 0)} className="bg-transparent border-b border-[var(--border-2)] w-16 outline-none focus:border-[var(--red)] text-[var(--white)] p-1 text-[13px] font-mono font-bold" />
+                                <NumericInput min={0} value={ex.distance || 0} onChange={n => updateExerciseField(idx, 'distance', n)} className="bg-transparent border-b border-[var(--border-2)] w-16 outline-none focus:border-[var(--red)] text-[var(--white)] p-1 text-[13px] font-mono font-bold" />
                               </div>
                             </div>
                             <button 
@@ -600,19 +601,19 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                                       )}
                                     </td>
                                     <td className="py-2.5 px-2 align-top">
-                                      <input 
-                                        type="number"
-                                        step="any"
+                                      <NumericInput
+                                        min={0}
                                         value={parseFloat(toDisplayUnit(set.weight).toFixed(1))}
-                                        onChange={e => updateSet(idx, setIdx, 'weight', fromDisplayUnit(parseFloat(e.target.value) || 0))}
+                                        onChange={n => updateSet(idx, setIdx, 'weight', fromDisplayUnit(n))}
                                         className="bg-transparent border-b border-[var(--border-2)] w-12 sm:w-16 outline-none focus:border-[var(--red)] text-[var(--white)] p-1 text-[13px] font-mono font-bold"
                                       />
                                     </td>
                                     <td className="py-2.5 px-2 align-top">
-                                      <input 
-                                        type="number"
+                                      <NumericInput
+                                        integer
+                                        min={0}
                                         value={set.reps}
-                                        onChange={e => updateSet(idx, setIdx, 'reps', parseInt(e.target.value) || 0)}
+                                        onChange={n => updateSet(idx, setIdx, 'reps', n)}
                                         className="bg-transparent border-b border-[var(--border-2)] w-12 sm:w-16 outline-none focus:border-[var(--red)] text-[var(--white)] p-1 text-[13px] font-mono font-bold"
                                       />
                                     </td>
