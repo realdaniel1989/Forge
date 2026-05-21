@@ -60,8 +60,6 @@ export function prewarmAudio(): void {
     gain.gain.setValueAtTime(0, ctx.currentTime);
     oscillator.start(ctx.currentTime);
     oscillator.stop(ctx.currentTime + 0.01);
-    oscillator.disconnect();
-    gain.disconnect();
   } catch {
     // Audio not supported — fail silently
   }

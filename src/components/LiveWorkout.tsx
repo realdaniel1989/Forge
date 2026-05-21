@@ -83,7 +83,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
     } else {
       releaseWakeLock();
     }
-  }, [isTimerActive]);
+  }, [isTimerActive, acquireWakeLock, releaseWakeLock]);
 
   useEffect(() => {
     if (!isTimerActive) return;
@@ -114,7 +114,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isTimerActive]);
+  }, [isTimerActive, acquireWakeLock]);
 
   useEffect(() => {
     if (!user) return;
