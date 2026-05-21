@@ -176,7 +176,7 @@ export const RoutineGenerator: React.FC<{ onRoutineSaved: () => void }> = ({ onR
                   )}
                   {ex.weight > 0 && (
                     <p className="text-[11px] text-[var(--stone)] mt-1 uppercase tracking-[0.06em]" style={condensed}>
-                      Suggested: {ex.weight} lbs
+                      Suggested: {ex.weight} kgs
                     </p>
                   )}
                 </div>

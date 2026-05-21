@@ -18,7 +18,7 @@ const responseSchema = {
           bodyPart: { type: "string", description: "Must be exactly one of: Chest, Back, Shoulders, Biceps, Triceps, Legs, Core, Glutes, Forearms, Calves, Cardio" },
           sets: { type: "number" },
           reps: { type: "number" },
-          weight: { type: "number", description: "Suggest starting weight in lbs" },
+          weight: { type: "number", description: "Suggest starting weight in kgs" },
           tip: { type: "string", description: "A quick form tip" },
         },
         required: ["name", "bodyPart", "sets", "reps", "weight"],
@@ -33,7 +33,8 @@ async function callGemini(bodyPart: string): Promise<string> {
 Provide the response as JSON matching the schema format.
 Include up to 6 exercises maximum.
 Make sure to specify sets, reps, and a brief tip for each exercise.
-For each exercise, assign a bodyPart from this exact list: ["Chest", "Back", "Shoulders", "Biceps", "Triceps", "Legs", "Core", "Glutes", "Forearms", "Calves", "Cardio"]. Choose the most appropriate body part that the exercise primarily targets.`;
+For each exercise, assign a bodyPart from this exact list: ["Chest", "Back", "Shoulders", "Biceps", "Triceps", "Legs", "Core", "Glutes", "Forearms", "Calves", "Cardio"]. Choose the most appropriate body part that the exercise primarily targets.
+Use kilograms (kg) for all suggested weights.`;
 
   const body = {
     contents: [{ parts: [{ text: prompt }] }],
