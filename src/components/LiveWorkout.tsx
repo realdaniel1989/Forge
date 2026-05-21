@@ -48,6 +48,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const [configuredRestTime, setConfiguredRestTime] = useState(90);
   const [restTimeRemaining, setRestTimeRemaining] = useState(0);
   const [isTimerActive, setIsTimerActive] = useState(false);
+  const [isTimerMinimized, setIsTimerMinimized] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [addModalBodyPart, setAddModalBodyPart] = useState<string>('');
@@ -82,6 +83,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
       if (remaining === 0) {
         setIsTimerActive(false);
         setRestTimeRemaining(0);
+        setIsTimerMinimized(false);
         playAlarm();
       } else {
         setRestTimeRemaining(remaining);
@@ -316,7 +318,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const completedSets = exercises.reduce((acc, ex) => acc + (ex.trackedSets?.filter(s => s.completed).length || 0), 0);
   const totalSets = exercises.reduce((acc, ex) => acc + (ex.type === 'cardio' ? 0 : (ex.trackedSets?.length || ex.sets || 0)), 0);
 
-  const isTimerTakeover = restTimeRemaining > 0 && isTimerActive;
+  const isTimerTakeover = restTimeRemaining > 0 && isTimerActive && !isTimerMinimized;
   const timerProgress = isTimerTakeover ? ((configuredRestTime - restTimeRemaining) / configuredRestTime) * 100 : 0;
   const isLowTime = restTimeRemaining <= 10 && restTimeRemaining > 0;
 
@@ -407,7 +409,16 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
       <div className="flex-1 p-5 sm:p-6 overflow-y-auto">
         {isTimerTakeover ? (
           /* Full-screen rest timer takeover */
-          <div className="flex flex-col items-center justify-center py-10 px-8 text-center min-h-full">
+          <div className="flex flex-col items-center justify-center py-10 px-8 text-center min-h-full relative">
+            <button
+              onClick={() => setIsTimerMinimized(true)}
+              className="absolute top-0 right-0 p-2 text-[var(--muted)] hover:text-[var(--text-2)] transition-colors bg-transparent border-none cursor-pointer"
+              title="Minimise timer"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
             <p className="font-mono text-[10px] text-[var(--muted)] uppercase tracking-[0.15em] mb-4">Resting</p>
             <p className={`font-mono text-[56px] sm:text-[80px] font-bold leading-none tracking-tight mb-7 ${isLowTime ? 'text-[var(--red)]' : 'text-[var(--white)]'}`}
                style={isLowTime ? { animation: 'pulse-red 1s ease-in-out infinite' } : {}}>
@@ -441,7 +452,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                 +30s
               </button>
               <button
-                onClick={() => { setRestTimeRemaining(0); setIsTimerActive(false); }}
+                onClick={() => { setRestTimeRemaining(0); setIsTimerActive(false); setIsTimerMinimized(false); }}
                 className="bg-transparent text-[var(--text-2)] border border-[var(--border-2)] rounded-[var(--radius-sm)] px-5 py-2.5 font-sans text-[12px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:border-[var(--muted)] hover:text-[var(--white)] transition-colors"
               >
                 Skip Rest
@@ -653,6 +664,24 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
           <span className="text-[10px] text-[var(--muted)]">LIVE</span>
         </div>
       </footer>
+
+      {/* Floating minimized timer pill */}
+      {restTimeRemaining > 0 && isTimerActive && isTimerMinimized && (
+        <button
+          onClick={() => setIsTimerMinimized(false)}
+          className="fixed left-1/2 -translate-x-1/2 bottom-[54px] z-40 flex items-center gap-3 bg-[var(--bg-1)] border border-[var(--border-2)] rounded-full px-5 py-2.5 cursor-pointer hover:border-[var(--muted)] transition-colors shadow-lg"
+        >
+          <span
+            className={`font-mono text-[15px] font-bold leading-none ${isLowTime ? 'text-[var(--red)]' : 'text-[var(--white)]'}`}
+            style={isLowTime ? { animation: 'pulse-red 1s ease-in-out infinite' } : {}}
+          >
+            {Math.floor(restTimeRemaining / 60)}:{(restTimeRemaining % 60).toString().padStart(2, '0')}
+          </span>
+          <span className="text-[10px] text-[var(--muted)] uppercase tracking-[0.08em] font-sans font-semibold">
+            Tap to expand
+          </span>
+        </button>
+      )}
 
       {/* Add Exercise Modal */}
       {showAddModal && (
