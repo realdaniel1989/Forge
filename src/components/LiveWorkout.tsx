@@ -16,9 +16,9 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
     } catch { return null; }
   })();
 
-  const [unit, setUnit] = useState<'lbs' | 'kgs'>(savedDraft?.unit || 'lbs');
+  const [unit, setUnit] = useState<'lbs' | 'kgs'>(savedDraft?.unit || 'kgs');
   const CONVERSION_FACTOR = 2.20462;
-  const baseUnitRef = useRef<'lbs' | 'kgs'>(savedDraft?.baseUnit || (savedDraft?.unit || 'lbs'));
+  const baseUnitRef = useRef<'lbs' | 'kgs'>(savedDraft?.baseUnit || (savedDraft?.unit || 'kgs'));
 
   const toDisplayUnit = (weight: number): number => {
     if (baseUnitRef.current === unit) return weight;
