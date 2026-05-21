@@ -670,15 +670,15 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
       {restTimeRemaining > 0 && isTimerActive && isTimerMinimized && (
         <button
           onClick={() => setIsTimerMinimized(false)}
-          className="fixed left-1/2 -translate-x-1/2 bottom-[54px] z-40 flex items-center gap-3 bg-[var(--bg-1)] border border-[var(--border-2)] rounded-full px-5 py-2.5 cursor-pointer hover:border-[var(--muted)] transition-colors shadow-lg"
+          className="fixed left-1/2 -translate-x-1/2 bottom-[54px] z-40 flex items-center gap-3 bg-[var(--red)] rounded-full px-5 py-2.5 cursor-pointer hover:opacity-90 transition-opacity shadow-lg"
         >
           <span
-            className={`font-mono text-[15px] font-bold leading-none ${isLowTime ? 'text-[var(--red)]' : 'text-[var(--white)]'}`}
+            className="font-mono text-[15px] font-bold leading-none text-white"
             style={isLowTime ? { animation: 'pulse-red 1s ease-in-out infinite' } : {}}
           >
             {Math.floor(restTimeRemaining / 60)}:{(restTimeRemaining % 60).toString().padStart(2, '0')}
           </span>
-          <span className="text-[10px] text-[var(--muted)] uppercase tracking-[0.08em] font-sans font-semibold">
+          <span className="text-[10px] text-white/80 uppercase tracking-[0.08em] font-sans font-semibold">
             Tap to expand
           </span>
         </button>
