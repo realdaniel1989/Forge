@@ -1,17 +1,22 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { ThemeProvider } from './ThemeContext';
 import { Login } from './components/Login';
 import { Layout } from './components/Layout';
 import { RoutinesList } from './components/RoutinesList';
-import { RoutineGenerator } from './components/RoutineGenerator';
-import { LiveWorkout } from './components/LiveWorkout';
-import { ProgressView } from './components/ProgressView';
-import { CustomRoutineBuilder } from './components/CustomRoutineBuilder';
-import { ExerciseLibrary } from './components/ExerciseLibrary';
-import { HabitTracker } from './components/HabitTracker';
 import { Routine } from './types';
 import { initError } from './firebase';
+
+const RoutineGenerator     = lazy(() => import('./components/RoutineGenerator').then(m => ({ default: m.RoutineGenerator })));
+const LiveWorkout          = lazy(() => import('./components/LiveWorkout').then(m => ({ default: m.LiveWorkout })));
+const ProgressView         = lazy(() => import('./components/ProgressView').then(m => ({ default: m.ProgressView })));
+const CustomRoutineBuilder = lazy(() => import('./components/CustomRoutineBuilder').then(m => ({ default: m.CustomRoutineBuilder })));
+const ExerciseLibrary      = lazy(() => import('./components/ExerciseLibrary').then(m => ({ default: m.ExerciseLibrary })));
+const HabitTracker         = lazy(() => import('./components/HabitTracker').then(m => ({ default: m.HabitTracker })));
+
+const TabFallback = () => (
+  <div className="p-8 text-[11px] font-mono text-[var(--stone)]">Loading…</div>
+);
 
 const MainView = () => {
   const { user } = useAuth();
@@ -35,13 +40,16 @@ const MainView = () => {
   if (activeWorkout) {
     return (
       <Layout currentTab="none" setTab={() => {}}>
-        <LiveWorkout routine={activeWorkout} onFinish={() => setActiveWorkout(null)} />
+        <Suspense fallback={<TabFallback />}>
+          <LiveWorkout routine={activeWorkout} onFinish={() => setActiveWorkout(null)} />
+        </Suspense>
       </Layout>
     );
   }
 
   return (
     <Layout currentTab={tab} setTab={changeTab}>
+      <Suspense fallback={<TabFallback />}>
       {mountedTabs.has('routines') && (
         <div style={{ display: tab === 'routines' ? 'contents' : 'none' }} aria-hidden={tab !== 'routines'} inert={tab !== 'routines' ? ('' as unknown as boolean) : undefined}>
           <RoutinesList
@@ -80,6 +88,7 @@ const MainView = () => {
           <HabitTracker />
         </div>
       )}
+      </Suspense>
     </Layout>
   );
 };
