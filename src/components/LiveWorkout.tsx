@@ -436,9 +436,18 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
               const next = getNextSetContext();
               if (!next) return null;
               return (
-                <p className="text-[13px] text-[var(--dim)] mb-8 font-medium">
-                  Next · Set <strong className="text-[var(--text)]">{String(next.setNum).padStart(2, '0')} / {next.totalSets}</strong> at {next.weight} {unit} × {next.reps} reps
-                </p>
+                <div className="flex flex-col items-center gap-1 mb-8">
+                  <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-[var(--muted)]">
+                    Up next
+                  </p>
+                  <p className="text-[18px] font-bold text-[var(--white)] tracking-tight">
+                    {next.exerciseName}
+                  </p>
+                  <p className="text-[13px] text-[var(--dim)] font-medium">
+                    Set <strong className="text-[var(--text)]">{next.setNum} / {next.totalSets}</strong>
+                    {' · '}{next.weight} {unit} × {next.reps} reps
+                  </p>
+                </div>
               );
             })()}
 

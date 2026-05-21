@@ -31,15 +31,16 @@ export function playAlarm(): void {
       ctx.resume();
     }
     const now = ctx.currentTime;
-    beep(440, now, 0.18, ctx);
-    beep(880, now + 0.22, 0.18, ctx);
+    beep(440, now, 0.5, ctx);
+    beep(660, now + 0.8, 0.5, ctx);
+    beep(880, now + 1.6, 1.0, ctx);
   } catch {
     // Audio not supported — fail silently
   }
 
   try {
     if ('vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200]);
+      navigator.vibrate([500, 300, 500, 300, 800]);
     }
   } catch {
     // Vibration not supported — fail silently
