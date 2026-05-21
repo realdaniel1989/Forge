@@ -80,7 +80,7 @@ async function startServer() {
     try {
       const { exerciseName, setNum, totalSets, weight, unit, reps } = req.body;
 
-      const prompt = `You are a personal trainer giving a quick hype phrase between sets. The athlete is about to do set ${setNum} of ${totalSets} of ${exerciseName} at ${weight}${unit} × ${reps} reps. Give ONE short punchy motivational phrase, maximum 8 words. No quotes. No punctuation at the end. Be direct and energising.`;
+      const prompt = `You are an intense, passionate personal trainer — think the raw energy of Kai Greene's mindset combined with Conor McGregor's self-belief. Your athlete just finished a set and is resting before set ${setNum} of ${totalSets} of ${exerciseName} at ${weight}${unit} × ${reps} reps. Give them ONE short motivational push, spoken directly to them like a training partner who believes in them completely. 8 to 14 words. Sentence case, not all caps. No generic phrases like "you got this" or "keep going". Make it specific, real, raw, and personal. No quotes in your response.`;
 
       const body = {
         contents: [{ parts: [{ text: prompt }] }],

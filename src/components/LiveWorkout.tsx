@@ -60,6 +60,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const [calorieSaving, setCalorieSaving] = useState(false);
   const [calorieError, setCalorieError] = useState('');
   const [motivatorText, setMotivatorText] = useState<string | null>(null);
+  const [motivatorLoading, setMotivatorLoading] = useState(false);
 
   // Find the active exercise index (first with an incomplete set)
   const activeExerciseIndex = exercises.findIndex(ex => {
@@ -86,6 +87,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
         setRestTimeRemaining(0);
         setIsTimerMinimized(false);
         setMotivatorText(null);
+        setMotivatorLoading(false);
         playAlarm();
       } else {
         setRestTimeRemaining(remaining);
@@ -183,14 +185,18 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
        }
 
        if (nextCtx) {
+         setMotivatorLoading(true);
          fetch('/api/motivate', {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({ ...nextCtx, unit }),
          })
-           .then(r => r.ok ? r.json() : null)
-           .then(data => { if (data?.phrase) setMotivatorText(data.phrase); })
-           .catch(() => {});
+           .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+           .then(data => {
+             if (data?.phrase) setMotivatorText(data.phrase);
+           })
+           .catch(err => console.error('Motivator fetch failed:', err))
+           .finally(() => setMotivatorLoading(false));
        }
     }
   };
@@ -456,9 +462,16 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
             <p className="font-mono text-[10px] text-[var(--muted)] uppercase tracking-[0.15em] mb-4">Resting</p>
 
             {/* AI motivator */}
+            {motivatorLoading && !motivatorText && (
+              <div className="mb-5 flex flex-col gap-2 items-center w-[220px]">
+                <div className="h-3 w-full rounded-full bg-[var(--bg-3)] animate-pulse" />
+                <div className="h-3 w-3/4 rounded-full bg-[var(--bg-3)] animate-pulse" />
+              </div>
+            )}
             {motivatorText && (
-              <p className="text-[22px] sm:text-[28px] font-black uppercase text-[var(--white)] tracking-tight leading-tight mb-5 max-w-[280px]">
-                {motivatorText}
+              <p className="mb-5 max-w-[300px] leading-snug text-[var(--motivator)]"
+                 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 28px)' }}>
+                "{motivatorText}"
               </p>
             )}
 
@@ -503,7 +516,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                 +30s
               </button>
               <button
-                onClick={() => { setRestTimeRemaining(0); setIsTimerActive(false); setIsTimerMinimized(false); setMotivatorText(null); }}
+                onClick={() => { setRestTimeRemaining(0); setIsTimerActive(false); setIsTimerMinimized(false); setMotivatorText(null); setMotivatorLoading(false); }}
                 className="bg-transparent text-[var(--text-2)] border border-[var(--border-2)] rounded-[var(--radius-sm)] px-5 py-2.5 font-sans text-[12px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:border-[var(--muted)] hover:text-[var(--white)] transition-colors"
               >
                 Skip Rest
