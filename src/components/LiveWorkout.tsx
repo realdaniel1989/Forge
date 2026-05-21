@@ -20,6 +20,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const [unit, setUnit] = useState<'lbs' | 'kgs'>(savedDraft?.unit || 'kgs');
   const CONVERSION_FACTOR = 2.20462;
   const baseUnitRef = useRef<'lbs' | 'kgs'>(savedDraft?.baseUnit || (savedDraft?.unit || 'kgs'));
+  const timerEndTimeRef = useRef<number>(0);
 
   const toDisplayUnit = (weight: number): number => {
     if (baseUnitRef.current === unit) return weight;
@@ -74,21 +75,31 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   }, [exercises, unit]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isTimerActive && restTimeRemaining > 0) {
-      interval = setInterval(() => {
-        setRestTimeRemaining(prev => {
-          if (prev <= 1) {
-            setIsTimerActive(false);
-            playAlarm();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isTimerActive, restTimeRemaining]);
+    if (!isTimerActive) return;
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((timerEndTimeRef.current - Date.now()) / 1000));
+      if (remaining === 0) {
+        setIsTimerActive(false);
+        setRestTimeRemaining(0);
+        playAlarm();
+      } else {
+        setRestTimeRemaining(remaining);
+      }
+    };
+
+    const interval = setInterval(tick, 500);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isTimerActive]);
 
   useEffect(() => {
     if (!user) return;
@@ -142,6 +153,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
     setExercises(newEx);
     
     if (field === 'completed' && value === true && !wasCompleted) {
+       timerEndTimeRef.current = Date.now() + configuredRestTime * 1000;
        setRestTimeRemaining(configuredRestTime);
        setIsTimerActive(true);
     }
@@ -420,7 +432,10 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
 
             <div className="flex gap-2">
               <button
-                onClick={() => setRestTimeRemaining(prev => prev + 30)}
+                onClick={() => {
+                  timerEndTimeRef.current = timerEndTimeRef.current + 30_000;
+                  setRestTimeRemaining(prev => prev + 30);
+                }}
                 className="bg-transparent text-[var(--dim)] border border-[var(--border-2)] rounded-[var(--radius-sm)] px-5 py-2.5 font-sans text-[12px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:border-[var(--muted)] hover:text-[var(--text-2)] transition-colors"
               >
                 +30s
