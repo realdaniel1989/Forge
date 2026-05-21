@@ -154,7 +154,7 @@ const HabitTracker   = lazy(() =&gt; import('./components/HabitTracker'));
   <h3>#5 — <code>@google/genai</code> is pulling in junk <span class="pill p-warn">30 min · saves 25–40 MB node_modules</span></h3>
   <p>The Gemini SDK is used <strong>only in <code>server.ts</code></strong> (5 lines). It drags in <code>protobufjs</code>, <code>web-streams-polyfill</code>, <code>framer-motion</code>(!), <code>@reduxjs</code>, <code>es-toolkit</code> — none of which show up in your source.</p>
   <p>Since you only call <code>ai.models.generateContent</code> with a JSON schema, you can replace the SDK with a direct REST call to <code>https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent</code> using <code>fetch</code>. ~40 lines.</p>
-  <p>This doesn't shrink the client bundle (SDK never reaches the browser), but it removes ~40 MB of transitive cruft from <code>node_modules</code> and trims the Docker image you deploy to Railway.</p>
+  <p>This doesn't shrink the client bundle (SDK never reaches the browser), but it removes ~40 MB of transitive cruft from <code>node_modules</code> and speeds up Railway's Nixpacks build (smaller install, less to cache).</p>
 </div>
 
 <div class="card">
@@ -200,7 +200,7 @@ const HabitTracker   = lazy(() =&gt; import('./components/HabitTracker'));
   <tr><th>Metric</th><th class="num">Before</th><th class="num">After</th></tr>
   <tr><td>Initial JS bundle</td><td class="num">855 KB</td><td class="num">~300–350 KB</td></tr>
   <tr><td>node_modules size</td><td class="num">421 MB</td><td class="num">~320 MB</td></tr>
-  <tr><td>Docker image (Railway)</td><td class="num">~600 MB</td><td class="num">~450 MB</td></tr>
+  <tr><td>Railway Nixpacks build image</td><td class="num">~600 MB</td><td class="num">~450 MB</td></tr>
   <tr><td>Cold install (CI)</td><td class="num">~60–90 s</td><td class="num">~40–60 s</td></tr>
   <tr><td>Source LOC</td><td class="num">3,938</td><td class="num">~3,800 (≈)</td></tr>
 </table>
