@@ -46,3 +46,23 @@ export function playAlarm(): void {
     // Vibration not supported — fail silently
   }
 }
+
+export function prewarmAudio(): void {
+  try {
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.01);
+    oscillator.disconnect();
+    gain.disconnect();
+  } catch {
+    // Audio not supported — fail silently
+  }
+}
