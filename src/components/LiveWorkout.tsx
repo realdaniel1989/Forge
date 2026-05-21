@@ -578,7 +578,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                                     <td className="py-2.5 px-2 text-right align-top">
                                       <button
                                         onClick={() => deleteSet(idx, setIdx)}
-                                        className="text-[var(--muted)] hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                        className="text-[var(--muted)] hover:text-red-500 transition-colors sm:opacity-0 sm:group-hover:opacity-100"
                                       >
                                         <X className="w-3.5 h-3.5" />
                                       </button>
