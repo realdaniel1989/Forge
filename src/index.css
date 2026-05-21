@@ -17,7 +17,6 @@
   --action-hover: #a80004;
   --pill-bg:      #f0f0f0;
   --pill-text:    #39393b;
-  --motivator:    #7C3AED;
 
   /* backward-compat aliases (LiveWorkout, etc.) */
   --bg:       var(--canvas);
@@ -54,7 +53,6 @@
   --action-hover: #ff6059;
   --pill-bg:      #2a2a2a;
   --pill-text:    #cacacb;
-  --motivator:    #FBBF24;
 
   /* backward-compat aliases */
   --bg:       var(--canvas);

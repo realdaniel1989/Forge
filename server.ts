@@ -4,7 +4,6 @@ import path from "path";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-const GEMINI_LITE_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
 
 const responseSchema = {
   type: "object",
@@ -75,44 +74,6 @@ async function startServer() {
 
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
-  });
-
-  app.post("/api/motivate", async (req, res) => {
-    try {
-      const { exerciseName, setNum, totalSets, weight, unit, reps } = req.body;
-
-      const prompt = `You are an intense, passionate personal trainer — think the raw energy of Kai Greene's mindset combined with Conor McGregor's self-belief. Your athlete just finished a set and is resting before set ${setNum} of ${totalSets} of ${exerciseName} at ${weight}${unit} × ${reps} reps. Give them ONE short motivational push, spoken directly to them like a training partner who believes in them completely. 8 to 14 words. Sentence case, not all caps. No generic phrases like "you got this" or "keep going". Make it specific, real, raw, and personal. No quotes in your response.`;
-
-      const body = {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: { phrase: { type: "string" } },
-            required: ["phrase"],
-          },
-          maxOutputTokens: 100,
-        },
-      };
-
-      const geminiRes = await fetch(GEMINI_LITE_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "User-Agent": "aistudio-build" },
-        body: JSON.stringify(body),
-      });
-
-      if (!geminiRes.ok) throw new Error(`Gemini ${geminiRes.status}`);
-
-      const data = await geminiRes.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error("No response from Gemini");
-
-      console.log("[motivate] Gemini raw:", text);
-      res.json(JSON.parse(text));
-    } catch (err) {
-      res.status(500).json({ error: String(err) });
-    }
   });
 
   app.post("/api/generate-workout", async (req, res) => {
