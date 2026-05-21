@@ -5,6 +5,7 @@ import { collection, addDoc, updateDoc, doc, query, where, getDocs, limit } from
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { Check, X, Loader2, Trash2, ChevronUp, ChevronDown, Plus, Timer, Search } from 'lucide-react';
+import { playAlarm } from '../timerAlarm';
 
 export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = ({routine, onFinish}) => {
   const { user } = useAuth();
@@ -79,6 +80,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
         setRestTimeRemaining(prev => {
           if (prev <= 1) {
             setIsTimerActive(false);
+            playAlarm();
             return 0;
           }
           return prev - 1;
