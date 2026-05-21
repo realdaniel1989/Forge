@@ -1,9 +1,14 @@
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const WEEKDAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
+export type DateInput = Date | number;
+
+const toDate = (input: DateInput): Date => input instanceof Date ? input : new Date(input);
+
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
-export function format(date: Date, pattern: string): string {
+export function format(input: DateInput, pattern: string): string {
+  const date = toDate(input);
   const y = date.getFullYear();
   const m = date.getMonth();
   const d = date.getDate();
@@ -29,27 +34,27 @@ export function format(date: Date, pattern: string): string {
   return out;
 }
 
-export function subDays(date: Date, n: number): Date {
-  const r = new Date(date);
+export function subDays(input: DateInput, n: number): Date {
+  const r = new Date(toDate(input));
   r.setDate(r.getDate() - n);
   return r;
 }
 
-export function addWeeks(date: Date, n: number): Date {
-  const r = new Date(date);
+export function addWeeks(input: DateInput, n: number): Date {
+  const r = new Date(toDate(input));
   r.setDate(r.getDate() + n * 7);
   return r;
 }
 
-export function subWeeks(date: Date, n: number): Date {
-  return addWeeks(date, -n);
+export function subWeeks(input: DateInput, n: number): Date {
+  return addWeeks(input, -n);
 }
 
 type WeekOpts = { weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6 };
 
-export function startOfWeek(date: Date, opts: WeekOpts = {}): Date {
+export function startOfWeek(input: DateInput, opts: WeekOpts = {}): Date {
   const weekStartsOn = opts.weekStartsOn ?? 0;
-  const r = new Date(date);
+  const r = new Date(toDate(input));
   r.setHours(0, 0, 0, 0);
   const day = r.getDay();
   const diff = (day - weekStartsOn + 7) % 7;
@@ -57,19 +62,19 @@ export function startOfWeek(date: Date, opts: WeekOpts = {}): Date {
   return r;
 }
 
-export function endOfWeek(date: Date, opts: WeekOpts = {}): Date {
-  const start = startOfWeek(date, opts);
+export function endOfWeek(input: DateInput, opts: WeekOpts = {}): Date {
+  const start = startOfWeek(input, opts);
   const r = new Date(start);
   r.setDate(r.getDate() + 6);
   r.setHours(23, 59, 59, 999);
   return r;
 }
 
-export function eachDayOfInterval({ start, end }: { start: Date; end: Date }): Date[] {
+export function eachDayOfInterval({ start, end }: { start: DateInput; end: DateInput }): Date[] {
   const days: Date[] = [];
-  const cur = new Date(start);
+  const cur = new Date(toDate(start));
   cur.setHours(0, 0, 0, 0);
-  const stop = new Date(end);
+  const stop = new Date(toDate(end));
   stop.setHours(0, 0, 0, 0);
   while (cur.getTime() <= stop.getTime()) {
     days.push(new Date(cur));
@@ -78,8 +83,10 @@ export function eachDayOfInterval({ start, end }: { start: Date; end: Date }): D
   return days;
 }
 
-export function isSameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear()
-    && a.getMonth() === b.getMonth()
-    && a.getDate() === b.getDate();
+export function isSameDay(a: DateInput, b: DateInput): boolean {
+  const da = toDate(a);
+  const db = toDate(b);
+  return da.getFullYear() === db.getFullYear()
+    && da.getMonth() === db.getMonth()
+    && da.getDate() === db.getDate();
 }
