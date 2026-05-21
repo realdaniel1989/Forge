@@ -5,7 +5,8 @@ import { collection, addDoc, updateDoc, doc, query, where, getDocs, limit } from
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { Check, X, Loader2, Trash2, ChevronUp, ChevronDown, Plus, Timer, Search } from 'lucide-react';
-import { playAlarm } from '../timerAlarm';
+import { playAlarm, prewarmAudio } from '../timerAlarm';
+import { useWakeLock } from '../hooks/useWakeLock';
 
 export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = ({routine, onFinish}) => {
   const { user } = useAuth();
@@ -49,6 +50,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const [restTimeRemaining, setRestTimeRemaining] = useState(0);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [isTimerMinimized, setIsTimerMinimized] = useState(false);
+  const { acquireWakeLock, releaseWakeLock } = useWakeLock();
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [addModalBodyPart, setAddModalBodyPart] = useState<string>('');
@@ -76,6 +78,14 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   }, [exercises, unit]);
 
   useEffect(() => {
+    if (isTimerActive) {
+      acquireWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+  }, [isTimerActive]);
+
+  useEffect(() => {
     if (!isTimerActive) return;
 
     const tick = () => {
@@ -93,7 +103,10 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
     const interval = setInterval(tick, 500);
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') tick();
+      if (document.visibilityState === 'visible') {
+        tick();
+        acquireWakeLock();
+      }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
@@ -155,6 +168,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
     setExercises(newEx);
 
     if (field === 'completed' && value === true && !wasCompleted) {
+       prewarmAudio();
        timerEndTimeRef.current = Date.now() + configuredRestTime * 1000;
        setRestTimeRemaining(configuredRestTime);
        setIsTimerActive(true);
