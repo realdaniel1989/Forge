@@ -76,6 +76,43 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  app.post("/api/motivate", async (req, res) => {
+    try {
+      const { exerciseName, setNum, totalSets, weight, unit, reps } = req.body;
+
+      const prompt = `You are a personal trainer giving a quick hype phrase between sets. The athlete is about to do set ${setNum} of ${totalSets} of ${exerciseName} at ${weight}${unit} × ${reps} reps. Give ONE short punchy motivational phrase, maximum 8 words. No quotes. No punctuation at the end. Be direct and energising.`;
+
+      const body = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "object",
+            properties: { phrase: { type: "string" } },
+            required: ["phrase"],
+          },
+          maxOutputTokens: 40,
+        },
+      };
+
+      const geminiRes = await fetch(GEMINI_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "User-Agent": "aistudio-build" },
+        body: JSON.stringify(body),
+      });
+
+      if (!geminiRes.ok) throw new Error(`Gemini ${geminiRes.status}`);
+
+      const data = await geminiRes.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error("No response from Gemini");
+
+      res.json(JSON.parse(text));
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
   app.post("/api/generate-workout", async (req, res) => {
     try {
       const { bodyPart } = req.body;

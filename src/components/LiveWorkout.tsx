@@ -59,6 +59,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const [calorieInput, setCalorieInput] = useState('');
   const [calorieSaving, setCalorieSaving] = useState(false);
   const [calorieError, setCalorieError] = useState('');
+  const [motivatorText, setMotivatorText] = useState<string | null>(null);
 
   // Find the active exercise index (first with an incomplete set)
   const activeExerciseIndex = exercises.findIndex(ex => {
@@ -84,6 +85,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
         setIsTimerActive(false);
         setRestTimeRemaining(0);
         setIsTimerMinimized(false);
+        setMotivatorText(null);
         playAlarm();
       } else {
         setRestTimeRemaining(remaining);
@@ -159,6 +161,37 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
        setRestTimeRemaining(configuredRestTime);
        setIsTimerActive(true);
        setIsTimerMinimized(false);
+       setMotivatorText(null);
+
+       // Find next incomplete set from the already-updated newEx
+       let nextCtx: { exerciseName: string; setNum: number; totalSets: number; weight: number; reps: number } | null = null;
+       for (const ex of newEx) {
+         if (ex.type === 'cardio') continue;
+         for (let j = 0; j < (ex.trackedSets?.length || 0); j++) {
+           if (!ex.trackedSets![j].completed) {
+             nextCtx = {
+               exerciseName: ex.name,
+               setNum: j + 1,
+               totalSets: ex.trackedSets!.length,
+               weight: parseFloat(toDisplayUnit(ex.trackedSets![j].weight).toFixed(1)),
+               reps: ex.trackedSets![j].reps,
+             };
+             break;
+           }
+         }
+         if (nextCtx) break;
+       }
+
+       if (nextCtx) {
+         fetch('/api/motivate', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ ...nextCtx, unit }),
+         })
+           .then(r => r.ok ? r.json() : null)
+           .then(data => { if (data?.phrase) setMotivatorText(data.phrase); })
+           .catch(() => {});
+       }
     }
   };
 
@@ -421,6 +454,14 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
               </svg>
             </button>
             <p className="font-mono text-[10px] text-[var(--muted)] uppercase tracking-[0.15em] mb-4">Resting</p>
+
+            {/* AI motivator */}
+            {motivatorText && (
+              <p className="text-[22px] sm:text-[28px] font-black uppercase text-[var(--white)] tracking-tight leading-tight mb-5 max-w-[280px]">
+                {motivatorText}
+              </p>
+            )}
+
             <p className={`font-mono text-[56px] sm:text-[80px] font-bold leading-none tracking-tight mb-7 ${isLowTime ? 'text-[var(--red)]' : 'text-[var(--white)]'}`}
                style={isLowTime ? { animation: 'pulse-red 1s ease-in-out infinite' } : {}}>
               {Math.floor(restTimeRemaining / 60)}:{(restTimeRemaining % 60).toString().padStart(2, '0')}
@@ -462,7 +503,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
                 +30s
               </button>
               <button
-                onClick={() => { setRestTimeRemaining(0); setIsTimerActive(false); setIsTimerMinimized(false); }}
+                onClick={() => { setRestTimeRemaining(0); setIsTimerActive(false); setIsTimerMinimized(false); setMotivatorText(null); }}
                 className="bg-transparent text-[var(--text-2)] border border-[var(--border-2)] rounded-[var(--radius-sm)] px-5 py-2.5 font-sans text-[12px] font-semibold uppercase tracking-[0.06em] cursor-pointer hover:border-[var(--muted)] hover:text-[var(--white)] transition-colors"
               >
                 Skip Rest
