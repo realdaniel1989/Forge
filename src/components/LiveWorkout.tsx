@@ -191,11 +191,12 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({ ...nextCtx, unit }),
          })
-           .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+           .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
            .then(data => {
+             console.log('[motivate] response:', data);
              if (data?.phrase) setMotivatorText(data.phrase);
            })
-           .catch(err => console.error('Motivator fetch failed:', err))
+           .catch(err => console.error('[motivate] failed:', err))
            .finally(() => setMotivatorLoading(false));
        }
     }

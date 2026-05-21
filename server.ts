@@ -91,7 +91,7 @@ async function startServer() {
             properties: { phrase: { type: "string" } },
             required: ["phrase"],
           },
-          maxOutputTokens: 40,
+          maxOutputTokens: 100,
         },
       };
 
@@ -107,6 +107,7 @@ async function startServer() {
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) throw new Error("No response from Gemini");
 
+      console.log("[motivate] Gemini raw:", text);
       res.json(JSON.parse(text));
     } catch (err) {
       res.status(500).json({ error: String(err) });
