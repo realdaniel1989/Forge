@@ -5,9 +5,12 @@ import { useExerciseLibrary } from '../hooks/useExerciseLibrary';
 const condensed: React.CSSProperties = { fontFamily: "'Barlow Condensed', sans-serif" };
 
 export const ExerciseLibrary: React.FC = () => {
-  const { entries, loading, error, addToLibrary, updateBodyPart, mergeExercises } = useExerciseLibrary();
+  const { entries, loading, error, addToLibrary, updateBodyPart, updateName, mergeExercises } = useExerciseLibrary();
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [editingNameValue, setEditingNameValue] = useState('');
+  const [nameEditError, setNameEditError] = useState<string | null>(null);
 
   // Add modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -88,6 +91,29 @@ export const ExerciseLibrary: React.FC = () => {
     } finally {
       setMergeSaving(false);
     }
+  };
+
+  const startNameEdit = (ex: { id: string; name: string }) => {
+    setEditingNameId(ex.id);
+    setEditingNameValue(ex.name);
+    setNameEditError(null);
+  };
+
+  const commitNameEdit = async (id: string) => {
+    if (!editingNameValue.trim()) { cancelNameEdit(); return; }
+    try {
+      await updateName(id, editingNameValue);
+      setEditingNameId(null);
+      setNameEditError(null);
+    } catch (e: any) {
+      setNameEditError(e?.message ?? 'Failed to save name.');
+    }
+  };
+
+  const cancelNameEdit = () => {
+    setEditingNameId(null);
+    setEditingNameValue('');
+    setNameEditError(null);
   };
 
   const selectClass = "bg-[var(--canvas)] border border-[var(--hairline-2)] rounded-lg px-2 py-1.5 text-[12px] text-[var(--ink)] outline-none transition-colors focus:border-[var(--ash)]";
@@ -174,9 +200,38 @@ export const ExerciseLibrary: React.FC = () => {
           </div>
           <div className="flex flex-col gap-1">
             {exs.map(ex => (
-              <div key={ex.id} className="flex justify-between items-center px-3 py-2.5 bg-[var(--surface)] rounded-lg">
-                <span className="text-[13px] font-semibold text-[var(--ink)]">{ex.name}</span>
-                <div className="flex items-center gap-3">
+              <div key={ex.id} className="flex flex-col bg-[var(--surface)] rounded-lg">
+                <div className="flex justify-between items-center px-3 py-2.5">
+                {editingNameId === ex.id ? (
+                  <div className="flex items-center gap-2 flex-1 min-w-0 mr-3">
+                    <input
+                      autoFocus
+                      value={editingNameValue}
+                      onChange={e => { setEditingNameValue(e.target.value); setNameEditError(null); }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') commitNameEdit(ex.id);
+                        if (e.key === 'Escape') cancelNameEdit();
+                      }}
+                      onBlur={() => commitNameEdit(ex.id)}
+                      className="flex-1 bg-[var(--canvas)] border border-[var(--ash)] rounded-lg px-2 py-1 text-[13px] font-semibold text-[var(--ink)] outline-none min-w-0"
+                    />
+                    <button
+                      onMouseDown={e => { e.preventDefault(); cancelNameEdit(); }}
+                      className="text-[var(--stone)] hover:text-[var(--ink)] bg-transparent border-none cursor-pointer text-[12px] shrink-0"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => startNameEdit(ex)}
+                    title="Edit name"
+                    className="text-[13px] font-semibold text-[var(--ink)] bg-transparent border-none cursor-pointer text-left hover:text-[var(--action)] transition-colors p-0 flex-1 min-w-0 mr-3 truncate"
+                  >
+                    {ex.name}
+                  </button>
+                )}
+                <div className="flex items-center gap-3 shrink-0">
                   <span className="text-[9px] bg-[var(--canvas)] border border-[var(--hairline-2)] rounded-full px-2 py-0.5 text-[var(--stone)] uppercase tracking-[.06em]">
                     {ex.type}
                   </span>
@@ -216,6 +271,10 @@ export const ExerciseLibrary: React.FC = () => {
                     merge
                   </button>
                 </div>
+                </div>
+                {editingNameId === ex.id && nameEditError && (
+                  <p className="text-[10px] text-[var(--action)] px-3 pb-2">{nameEditError}</p>
+                )}
               </div>
             ))}
           </div>

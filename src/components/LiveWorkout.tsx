@@ -7,6 +7,7 @@ import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { X, Loader2, Trash2, Plus, Timer, Search } from 'lucide-react';
 import { playAlarm, prewarmAudio } from '../timerAlarm';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { useExerciseLibrary } from '../hooks/useExerciseLibrary';
 import { NumericInput } from './NumericInput';
 import {
   DndContext,
@@ -231,6 +232,7 @@ const SortableExerciseCard: React.FC<SortableCardProps> = ({
 
 export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = ({routine, onFinish}) => {
   const { user } = useAuth();
+  const { addToLibrary } = useExerciseLibrary();
   const draftKey = `forge_workout_draft_${routine.id}`;
   const savedDraft: { exercises: Exercise[]; unit: 'lbs' | 'kgs'; baseUnit: 'lbs' | 'kgs' } | null = (() => {
     try {
@@ -463,7 +465,12 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const addExercise = (name: string, fromHistory?: {sets: TrackedSet[], type?: 'strength' | 'cardio', duration?: number, distance?: number, unit?: string, bodyPart?: string}, explicitType?: 'strength' | 'cardio', bodyPart?: string) => {
     const isCardio = explicitType === 'cardio' || fromHistory?.type === 'cardio';
     const resolvedBodyPart = bodyPart || fromHistory?.bodyPart || (isCardio ? 'Cardio' : undefined);
-    
+
+    // Persist brand-new exercises (created via search, not selected from history) to the library
+    if (!fromHistory && resolvedBodyPart) {
+      addToLibrary(name, resolvedBodyPart as any, isCardio ? 'cardio' : 'strength').catch(() => {});
+    }
+
     if (isCardio) {
       setExercises([...exercises, {
         name: name,

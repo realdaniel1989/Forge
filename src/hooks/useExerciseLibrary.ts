@@ -97,6 +97,26 @@ export function useExerciseLibrary() {
     }
   }, [fetchEntries]);
 
+  const updateName = useCallback(async (id: string, newName: string): Promise<void> => {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    const newNameKey = normalizeExerciseName(trimmed);
+    if (entries.some(e => e.id !== id && e.nameKey === newNameKey)) {
+      throw new Error('An exercise with this name already exists.');
+    }
+    setEntries(prev =>
+      prev.map(e => e.id === id ? { ...e, name: trimmed, nameKey: newNameKey } : e)
+          .sort((a, b) => a.name.localeCompare(b.name))
+    );
+    try {
+      await updateDoc(doc(db, 'exerciseLibrary', id), { name: trimmed, nameKey: newNameKey });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `exerciseLibrary/${id}`);
+      await fetchEntries();
+      throw e;
+    }
+  }, [entries, fetchEntries]);
+
   const mergeExercises = useCallback(async (
     primary: ExerciseEntry,
     secondary: ExerciseEntry
@@ -165,5 +185,5 @@ export function useExerciseLibrary() {
     }
   }, [user]);
 
-  return { entries, loading, error, addToLibrary, updateBodyPart, mergeExercises };
+  return { entries, loading, error, addToLibrary, updateBodyPart, updateName, mergeExercises };
 }
