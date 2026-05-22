@@ -77,7 +77,7 @@ export const RoutineGenerator: React.FC<{ onRoutineSaved: () => void }> = ({ onR
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-[var(--hairline)] gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--stone)] mb-1" style={condensed}>
-            {generatedRoutine ? `AI Generator · ${bodyPart}` : 'Powered by Gemini'}
+            {generatedRoutine ? `AI Generator · ${bodyPart}` : 'Powered by Gemma'}
           </p>
           <h1
             className="text-[36px] sm:text-[52px] font-black uppercase text-[var(--ink)] leading-none"
