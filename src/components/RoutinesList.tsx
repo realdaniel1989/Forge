@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { useAuth } from '../AuthContext';
 import { Routine } from '../types';
+import { getPlannedSets, formatTempo } from '../tempoUtils';
 
 const condensed: React.CSSProperties = { fontFamily: "'Barlow Condensed', sans-serif" };
 
@@ -132,7 +133,10 @@ export const RoutinesList: React.FC<{
           {routines.map((routine, idx) => {
             const isLatest = idx === 0;
             const exerciseCount = routine.exercises.length;
-            const totalSets = routine.exercises.reduce((acc, ex) => acc + (ex.sets || 0), 0);
+            const totalSets = routine.exercises.reduce(
+              (acc, ex) => acc + (ex.type === 'cardio' ? 0 : getPlannedSets(ex).length),
+              0,
+            );
 
             return (
               <div
@@ -169,7 +173,19 @@ export const RoutinesList: React.FC<{
                             {ex.name}
                             {ex.type === 'cardio'
                               ? ex.duration ? <span className="text-[11px] text-[var(--stone)] ml-1" style={condensed}>{ex.duration}m</span> : null
-                              : (ex.sets && ex.reps) ? <span className="text-[11px] text-[var(--stone)] ml-1" style={condensed}>{ex.sets}×{ex.reps}</span> : null
+                              : (() => {
+                                  const planned = getPlannedSets(ex);
+                                  if (planned.length === 0) return null;
+                                  const headlineReps = planned[0].reps;
+                                  const repsVary = planned.some(p => p.reps !== headlineReps);
+                                  const tempoStr = formatTempo(planned[0].tempo);
+                                  return (
+                                    <span className="text-[11px] text-[var(--stone)] ml-1" style={condensed}>
+                                      {planned.length}×{headlineReps}{repsVary ? '+' : ''}
+                                      {tempoStr && <span className="ml-2 font-mono text-[var(--muted)]">· {tempoStr}</span>}
+                                    </span>
+                                  );
+                                })()
                             }
                           </span>
                         </li>
@@ -222,7 +238,24 @@ export const RoutinesList: React.FC<{
                         {routine.exercises.slice(0, 6).map((ex, i) => (
                           <li key={i} className="flex items-baseline gap-2 text-[13px] text-[var(--stone)]">
                             <span className="text-[var(--hairline-2)] shrink-0" style={condensed}>–</span>
-                            <span>{ex.name}{ex.type === 'cardio' ? ex.duration ? <span className="text-[11px] text-[var(--stone)] ml-1.5" style={condensed}>{ex.duration} min</span> : null : (ex.sets && ex.reps) ? <span className="text-[11px] text-[var(--stone)] ml-1.5" style={condensed}>{ex.sets}×{ex.reps}</span> : null}</span>
+                            <span>
+                              {ex.name}
+                              {ex.type === 'cardio' ? (
+                                ex.duration ? <span className="text-[11px] text-[var(--stone)] ml-1.5" style={condensed}>{ex.duration} min</span> : null
+                              ) : (() => {
+                                const planned = getPlannedSets(ex);
+                                if (planned.length === 0) return null;
+                                const headlineReps = planned[0].reps;
+                                const repsVary = planned.some(p => p.reps !== headlineReps);
+                                const tempoStr = formatTempo(planned[0].tempo);
+                                return (
+                                  <span className="text-[11px] text-[var(--stone)] ml-1.5" style={condensed}>
+                                    {planned.length}×{headlineReps}{repsVary ? '+' : ''}
+                                    {tempoStr && <span className="ml-2 font-mono text-[var(--muted)]">· {tempoStr}</span>}
+                                  </span>
+                                );
+                              })()}
+                            </span>
                           </li>
                         ))}
                         {routine.exercises.length > 6 && (
