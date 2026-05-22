@@ -25,6 +25,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { getPlannedSets, formatTempo } from '../tempoUtils';
 
 const GripHandle = ({ listeners, attributes }: { listeners: any; attributes: any }) => (
   <div
@@ -93,9 +94,17 @@ const SortableExerciseCard: React.FC<SortableCardProps> = ({
           {ex.type === 'cardio' && (
             <span className="font-mono text-[10px] text-[var(--muted)] shrink-0">{ex.duration} min</span>
           )}
-          {ex.type !== 'cardio' && (
-            <span className="font-mono text-[10px] text-[var(--muted)] shrink-0">{ex.sets}×{ex.reps}</span>
-          )}
+          {ex.type !== 'cardio' && (() => {
+            const planned = getPlannedSets(ex);
+            if (planned.length === 0) return null;
+            const headlineReps = planned[0].reps;
+            const repsVary = planned.some(p => p.reps !== headlineReps);
+            return (
+              <span className="font-mono text-[10px] text-[var(--muted)] shrink-0">
+                {planned.length}×{headlineReps}{repsVary ? '+' : ''}
+              </span>
+            );
+          })()}
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {ex.type !== 'cardio' && ex.trackedSets && (
@@ -154,6 +163,8 @@ const SortableExerciseCard: React.FC<SortableCardProps> = ({
               </thead>
               <tbody>
                 {ex.trackedSets?.map((set, setIdx) => {
+                  const planned = getPlannedSets(ex);
+                  const tempoStr = formatTempo(planned[setIdx]?.tempo);
                   const history = previousHistory[ex.name.toLowerCase().trim()];
                   const prevSet = history?.sets[setIdx];
                   let ghostWeight = '';
@@ -168,7 +179,10 @@ const SortableExerciseCard: React.FC<SortableCardProps> = ({
                   return (
                     <tr key={setIdx} className="border-b border-[var(--border)]/60 hover:bg-[var(--bg-2)]/30 transition-colors group">
                       <td className="py-2.5 px-2 text-[var(--text-2)] align-top">
-                        <div className="pt-1">{String(setIdx + 1).padStart(2, '0')} / {ex.sets}</div>
+                        <div className="pt-1">{String(setIdx + 1).padStart(2, '0')} / {ex.trackedSets?.length ?? 0}</div>
+                        {tempoStr && (
+                          <div className="font-mono text-[10px] text-[var(--muted)] mt-0.5">{tempoStr}</div>
+                        )}
                         {ghostWeight && (
                           <div className="text-[9px] text-[var(--border-2)] mt-1 whitespace-nowrap font-mono">prev: {ghostWeight}</div>
                         )}
@@ -261,10 +275,10 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const [exercises, setExercises] = useState<Exercise[]>(
     savedDraft?.exercises || routine.exercises.map(ex => ({
       ...ex,
-      trackedSets: Array.from({ length: ex.sets }).map(() => ({
-        reps: ex.reps,
-        weight: ex.weight || 0,
-        completed: false
+      trackedSets: getPlannedSets(ex).map(p => ({
+        reps: p.reps,
+        weight: p.weight,
+        completed: false,
       }))
     }))
   );
