@@ -6,6 +6,7 @@ import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { useAuth } from '../AuthContext';
 import { useExerciseLibrary } from '../hooks/useExerciseLibrary';
+import { getPlannedSets, formatTempo } from '../tempoUtils';
 
 const condensed: React.CSSProperties = { fontFamily: "'Barlow Condensed', sans-serif" };
 
@@ -77,7 +78,7 @@ export const RoutineGenerator: React.FC<{ onRoutineSaved: () => void }> = ({ onR
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-[var(--hairline)] gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--stone)] mb-1" style={condensed}>
-            {generatedRoutine ? `AI Generator · ${bodyPart}` : 'Powered by Gemma'}
+            {generatedRoutine ? `AI Generator · ${bodyPart}` : 'Powered by Qwen'}
           </p>
           <h1
             className="text-[36px] sm:text-[52px] font-black uppercase text-[var(--ink)] leading-none"
@@ -168,17 +169,32 @@ export const RoutineGenerator: React.FC<{ onRoutineSaved: () => void }> = ({ onR
                       className="text-[13px] font-semibold text-[var(--stone)] shrink-0"
                       style={condensed}
                     >
-                      {ex.type === 'cardio' ? `${ex.duration} min` : `${ex.sets} × ${ex.reps}`}
+                      {ex.type === 'cardio' ? `${ex.duration} min` : (() => {
+                        const planned = getPlannedSets(ex);
+                        if (planned.length === 0) return '—';
+                        const headlineReps = planned[0].reps;
+                        const repsVary = planned.some(p => p.reps !== headlineReps);
+                        return `${planned.length} × ${headlineReps}${repsVary ? '+' : ''}`;
+                      })()}
                     </span>
                   </div>
                   {ex.tip && (
                     <p className="text-[13px] text-[var(--stone)] leading-relaxed">{ex.tip}</p>
                   )}
-                  {ex.weight > 0 && (
-                    <p className="text-[11px] text-[var(--stone)] mt-1 uppercase tracking-[0.06em]" style={condensed}>
-                      Suggested: {ex.weight} kgs
-                    </p>
-                  )}
+                  {(() => {
+                    const planned = getPlannedSets(ex);
+                    if (planned.length === 0) return null;
+                    const w = planned[0].weight;
+                    const tempoStr = formatTempo(planned[0].tempo);
+                    if (w <= 0 && !tempoStr) return null;
+                    return (
+                      <p className="text-[11px] text-[var(--stone)] mt-1 uppercase tracking-[0.06em]" style={condensed}>
+                        {w > 0 && <>Suggested: {w} kgs</>}
+                        {w > 0 && tempoStr && <span className="mx-1.5">·</span>}
+                        {tempoStr && <span className="font-mono normal-case tracking-normal">Tempo {tempoStr}</span>}
+                      </p>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
