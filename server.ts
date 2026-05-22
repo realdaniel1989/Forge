@@ -62,6 +62,25 @@ For each exercise, assign a bodyPart from this exact list: ["Chest", "Back", "Sh
   return text;
 }
 
+function validateRoutineShape(data: any): void {
+  if (!data || typeof data !== "object") throw new Error("Response is not an object");
+  if (typeof data.name !== "string") throw new Error("Missing name");
+  if (!Array.isArray(data.exercises) || data.exercises.length === 0) {
+    throw new Error("Missing or empty exercises array");
+  }
+  for (const ex of data.exercises) {
+    if (!ex || typeof ex.name !== "string") throw new Error("Exercise missing name");
+    if (!Array.isArray(ex.plannedSets) || ex.plannedSets.length === 0) {
+      throw new Error(`Exercise "${ex.name}" missing plannedSets`);
+    }
+    for (const p of ex.plannedSets) {
+      if (typeof p.reps !== "number" || typeof p.weight !== "number") {
+        throw new Error(`Exercise "${ex.name}" has a set without reps/weight`);
+      }
+    }
+  }
+}
+
 async function startServer() {
   const app = express();
   const PORT = parseInt(process.env.PORT || "3000", 10);
@@ -79,11 +98,14 @@ async function startServer() {
         return res.status(400).json({ error: "bodyPart is required" });
       }
 
-      let text: string | undefined;
+      let parsed: any;
       let retries = 3;
       while (retries > 0) {
         try {
-          text = await callModel(bodyPart);
+          const text = await callModel(bodyPart);
+          const candidate = JSON.parse(text);
+          validateRoutineShape(candidate);
+          parsed = candidate;
           break;
         } catch (error: any) {
           console.error("OpenRouter API Error:", error.message);
@@ -93,8 +115,8 @@ async function startServer() {
         }
       }
 
-      if (!text) throw new Error("Failed to generate content after retries");
-      res.json(JSON.parse(text));
+      if (!parsed) throw new Error("Failed to generate content after retries");
+      res.json(parsed);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: String(error) });
