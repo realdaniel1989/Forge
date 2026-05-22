@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Routine, Exercise, TrackedSet, WorkoutLog, BODY_PARTS } from '../types';
 import { useAuth } from '../AuthContext';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, limit } from 'firebase/firestore';
@@ -572,16 +572,23 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const timerProgress = isTimerTakeover ? ((configuredRestTime - restTimeRemaining) / configuredRestTime) * 100 : 0;
   const isLowTime = restTimeRemaining <= 10 && restTimeRemaining > 0;
 
-  // Save scroll position when timer takeover starts; restore it when it ends
+  // The page scrolls on window (the layout uses min-h-screen, not a fixed
+  // overflow container), so track window.scrollY continuously and restore it
+  // after the timer takeover unmounts. Saving inside an effect when the timer
+  // activates is too late — by then exercises have collapsed and scrollY is 0.
   useEffect(() => {
-    if (isTimerTakeover) {
-      savedScrollRef.current = scrollContainerRef.current?.scrollTop ?? 0;
-    } else {
-      requestAnimationFrame(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = savedScrollRef.current;
-        }
-      });
+    const onScroll = () => {
+      if (!isTimerTakeover) {
+        savedScrollRef.current = window.scrollY;
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isTimerTakeover]);
+
+  useLayoutEffect(() => {
+    if (!isTimerTakeover) {
+      window.scrollTo(0, savedScrollRef.current);
     }
   }, [isTimerTakeover]);
 
