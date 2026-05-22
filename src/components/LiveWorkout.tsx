@@ -245,6 +245,8 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const CONVERSION_FACTOR = 2.20462;
   const baseUnitRef = useRef<'lbs' | 'kgs'>(savedDraft?.baseUnit || (savedDraft?.unit || 'kgs'));
   const timerEndTimeRef = useRef<number>(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const savedScrollRef = useRef<number>(0);
 
   const toDisplayUnit = (weight: number): number => {
     if (baseUnitRef.current === unit) return weight;
@@ -570,6 +572,19 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
   const timerProgress = isTimerTakeover ? ((configuredRestTime - restTimeRemaining) / configuredRestTime) * 100 : 0;
   const isLowTime = restTimeRemaining <= 10 && restTimeRemaining > 0;
 
+  // Save scroll position when timer takeover starts; restore it when it ends
+  useEffect(() => {
+    if (isTimerTakeover) {
+      savedScrollRef.current = scrollContainerRef.current?.scrollTop ?? 0;
+    } else {
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = savedScrollRef.current;
+        }
+      });
+    }
+  }, [isTimerTakeover]);
+
   // Find next set context for timer
   const getNextSetContext = () => {
     for (let i = 0; i < exercises.length; i++) {
@@ -654,7 +669,7 @@ export const LiveWorkout: React.FC<{routine: Routine, onFinish: () => void}> = (
       </header>
 
       {/* Exercise area OR timer takeover */}
-      <div className="flex-1 p-5 sm:p-6 overflow-y-auto">
+      <div ref={scrollContainerRef} className="flex-1 p-5 sm:p-6 overflow-y-auto">
         {/* Full-screen rest timer takeover — always in DOM so exercise scroll position is preserved */}
         <div style={{ display: isTimerTakeover ? 'flex' : 'none' }} className="flex-col items-center justify-center py-10 px-8 text-center min-h-full relative">
             <button
