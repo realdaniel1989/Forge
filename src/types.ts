@@ -27,6 +27,20 @@ export interface Exercise {
   actualWeight?: number;
   completed?: boolean;
   trackedSets?: TrackedSet[];
+  plannedSets?: PlannedSet[];
+}
+
+export interface Tempo {
+  down: number;        // eccentric, 0–10s
+  holdBottom: number;  // pause at bottom, 0–10s
+  up: number | 'X';    // concentric, 0–10s — 'X' = explosive
+  holdTop: number;     // pause at top, 0–10s
+}
+
+export interface PlannedSet {
+  reps: number;
+  weight: number;
+  tempo?: Tempo;
 }
 
 export interface Routine {
