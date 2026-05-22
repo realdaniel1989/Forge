@@ -4,7 +4,7 @@ import path from "path";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const OPENROUTER_MODEL = "google/gemma-4-31b-it";
+const OPENROUTER_MODEL = "qwen/qwen3-32b:nitro";
 
 const schemaDescription = `{
   "name": "string (engaging name for the routine)",
@@ -12,10 +12,14 @@ const schemaDescription = `{
     {
       "name": "string",
       "bodyPart": "one of: Chest, Back, Shoulders, Biceps, Triceps, Legs, Core, Glutes, Forearms, Calves, Cardio",
-      "sets": number,
-      "reps": number,
-      "weight": number (starting weight in kg),
-      "tip": "string (brief form tip)"
+      "tip": "string (brief form tip)",
+      "plannedSets": [
+        {
+          "reps": number,
+          "weight": number (starting weight in kg),
+          "tempo": { "down": number, "holdBottom": number, "up": number | "X", "holdTop": number }
+        }
+      ]
     }
   ]
 }`;
@@ -25,7 +29,9 @@ async function callModel(bodyPart: string): Promise<string> {
 Respond with ONLY a JSON object matching this exact shape (no markdown, no commentary):
 ${schemaDescription}
 Include up to 6 exercises maximum.
-Specify sets, reps, weight (kg), and a brief tip for each exercise.
+For each exercise, return 3–5 entries in plannedSets. Each entry has reps, weight (kg), and a tempo object.
+Tempo numbers are seconds (0–10) for each phase: down (eccentric), holdBottom, up (concentric), holdTop. Use "X" for the up phase to mean explosive.
+Vary reps, weight, and tempo across sets when it serves the training goal — for example a heavier/lower-rep top set, or a slower eccentric finisher. When uniform sets are appropriate, repeat the same values. Variation should serve intent, not be added for its own sake.
 For each exercise, assign a bodyPart from this exact list: ["Chest", "Back", "Shoulders", "Biceps", "Triceps", "Legs", "Core", "Glutes", "Forearms", "Calves", "Cardio"]. Choose the most appropriate body part the exercise primarily targets.`;
 
   const body = {
