@@ -30,6 +30,7 @@ async function callModel(bodyPart: string): Promise<string> {
 Generate a workout routine for the body part: ${bodyPart}.
 Respond with ONLY a JSON object matching this exact shape (no markdown, no commentary):
 ${schemaDescription}
+The routine "name" must be short and plain — 2 to 4 words, no subtitle, no colon, no dash. Examples: "Chest Day", "Quad Builder", "Back Power". Do NOT reference the persona ("Quad Guy", "QuadGuy", "Julian", "Tempo-Driven", etc.) in the name.
 Include up to 6 exercises maximum.
 For each exercise, return 3–5 entries in plannedSets. Each entry has reps, weight (kg), and a tempo object.
 Tempo numbers are seconds (0–10) for each phase: down (eccentric), holdBottom, up (concentric), holdTop. Use "X" for the up phase to mean explosive.
