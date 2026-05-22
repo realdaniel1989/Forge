@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Exercise, BODY_PARTS, BodyPart, normalizeExerciseName } from '../types';
+import type { PlannedSet } from '../types';
 import { useExerciseLibrary } from '../hooks/useExerciseLibrary';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -7,6 +8,8 @@ import { handleFirestoreError, OperationType } from '../firestoreUtils';
 import { useAuth } from '../AuthContext';
 import { Trash2 } from 'lucide-react';
 import { NumericInput } from './NumericInput';
+import { ExerciseSetTable } from './ExerciseSetTable';
+import { getPlannedSets } from '../tempoUtils';
 
 const condensed: React.CSSProperties = { fontFamily: "'Barlow Condensed', sans-serif" };
 
@@ -20,7 +23,16 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
 
   const addExercise = (type: 'strength' | 'cardio') => {
     if (type === 'strength') {
-      setExercises([...exercises, { name: '', sets: 3, reps: 10, weight: 0, type: 'strength', bodyPart: undefined }]);
+      setExercises([...exercises, {
+        name: '',
+        type: 'strength',
+        bodyPart: undefined,
+        plannedSets: [
+          { reps: 10, weight: 0 },
+          { reps: 10, weight: 0 },
+          { reps: 10, weight: 0 },
+        ],
+      }]);
     } else {
       setExercises([...exercises, { name: '', type: 'cardio', duration: 30, distance: 0, bodyPart: 'Cardio' }]);
     }
@@ -214,18 +226,7 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
                       <NumericInput min={0} value={ex.distance || 0} onChange={n => updateExercise(idx, 'distance', n)} className={numInputClass} />
                     </div>
                   </>
-                ) : (
-                  <>
-                    <div className="w-16">
-                      <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-1.5" style={condensed}>Sets</label>
-                      <NumericInput integer min={1} value={ex.sets || 1} onChange={n => updateExercise(idx, 'sets', n)} className={numInputClass} />
-                    </div>
-                    <div className="w-16">
-                      <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--stone)] mb-1.5" style={condensed}>Reps</label>
-                      <NumericInput integer min={1} value={ex.reps || 1} onChange={n => updateExercise(idx, 'reps', n)} className={numInputClass} />
-                    </div>
-                  </>
-                )}
+                ) : null}
 
                 <button
                   onClick={() => removeExercise(idx)}
@@ -233,6 +234,14 @@ export const CustomRoutineBuilder: React.FC<{ onCancel: () => void; onSave: () =
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
+                {ex.type !== 'cardio' && (
+                  <div className="basis-full mt-2">
+                    <ExerciseSetTable
+                      sets={getPlannedSets(ex)}
+                      onChange={(next: PlannedSet[]) => updateExercise(idx, 'plannedSets', next)}
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
